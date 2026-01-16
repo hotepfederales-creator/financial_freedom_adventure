@@ -1,0 +1,5 @@
+{
+  "name": "Budget Builder App",
+  "description": "A gamified, AI-powered financial assistant that helps you budget, estimate taxes, and learn financial literacy through interactive challenges and Gemini-powered insights.",
+  "requestFramePermissions": []
+}
