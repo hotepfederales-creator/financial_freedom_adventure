@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { UserState, ChatMessage, DailyStats } from '../types';
 import { Card } from './ui/Card';
@@ -6,31 +7,63 @@ import { getChatResponse } from '../services/geminiService';
 
 interface FinancialChatProps {
   userState: UserState;
+  onUpdateUser: (newState: Partial<UserState>) => void;
   addPoints: (amount: number) => void;
   incrementDailyStat: (key: keyof Omit<DailyStats, 'date' | 'claimedQuests'>) => void;
 }
 
-export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, addPoints, incrementDailyStat }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'model',
-      text: "Professor Ledger here. I suppose you want financial advice? Make it quick, I'm auditing a Dragon's hoard.",
-      timestamp: Date.now()
-    }
-  ]);
+export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, onUpdateUser, addPoints, incrementDailyStat }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Lock Logic: User must log at least 1 expense today
-  const isLocked = userState.dailyStats.expensesLogged < 1;
+  
+  // Use persistent history or empty array
+  const messages = userState.ledgerChatHistory || [];
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // --- Story Narrative Triggers ---
+  useEffect(() => {
+    let newMessages: ChatMessage[] = [];
+    let updatedFlags = { ...userState.storyFlags };
+    let hasUpdates = false;
+
+    // Trigger 1: Income Set -> Income Shield
+    if (!userState.storyFlags.incomeSetSeen && userState.monthlyIncome > 0) {
+        newMessages.push({
+            id: 'story-income',
+            role: 'model',
+            text: "Excellent! Your 'Income Shield' is up. The egg is safe... for now. But to help it hatch, we need to feed it 'Data Berries'. Can you tell me your top 3 expenses? (Log them in the 'Item Bag' tab!)",
+            timestamp: Date.now()
+        });
+        updatedFlags.incomeSetSeen = true;
+        hasUpdates = true;
+    }
+
+    // Trigger 2: Expense Logged -> Budget Sprout
+    if (!userState.storyFlags.expenseLoggedSeen && userState.transactions.length > 0) {
+        newMessages.push({
+            id: 'story-expense',
+            role: 'model',
+            text: "Aha! Your egg is shaking... It's hatching into a 'Budget Sprout'! This little one is weak against 'Impulse Buys' but strong against 'Planning'. Listen closely, Trainer. Every time you save money, this Sprout gains XP. If you overspend, it takes damage. Are you ready to become a FinMon Master?",
+            timestamp: Date.now() + 500 // Slight delay
+        });
+        updatedFlags.expenseLoggedSeen = true;
+        hasUpdates = true;
+    }
+
+    if (hasUpdates) {
+        onUpdateUser({
+            ledgerChatHistory: [...messages, ...newMessages],
+            storyFlags: updatedFlags
+        });
+    }
+  }, [userState.monthlyIncome, userState.transactions.length, userState.storyFlags]);
+
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,13 +76,15 @@ export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, addPoin
       timestamp: Date.now()
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    const newHistory = [...messages, userMsg];
+    onUpdateUser({ ledgerChatHistory: newHistory });
+    
     setInput('');
     setLoading(true);
     incrementDailyStat('chatMessagesSent');
 
     // Prepare history for API
-    const history = messages.map(m => ({
+    const history = newHistory.map(m => ({
       role: m.role,
       parts: [{ text: m.text }]
     }));
@@ -64,48 +99,10 @@ export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, addPoin
       timestamp: Date.now()
     };
 
-    setMessages(prev => [...prev, botMsg]);
+    onUpdateUser({ ledgerChatHistory: [...newHistory, botMsg] });
     setLoading(false);
     addPoints(5); // Small reward for engagement
   };
-
-  if (isLocked) {
-    return (
-      <Card className="h-[600px] flex items-center justify-center text-center p-8 bg-slate-50 relative overflow-hidden" title="Financial Advisor Chat">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-400 to-transparent"></div>
-        
-        <div className="max-w-md space-y-8 relative z-10">
-          <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto shadow-xl border-4 border-slate-200 relative animate-pulse">
-            <Bot size={64} className="text-slate-300" />
-            <div className="absolute -bottom-2 -right-2 bg-red-500 text-white p-3 rounded-full border-4 border-white shadow-lg">
-              <Lock size={24} />
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h2 className="text-3xl font-black text-slate-800">The Lab is Locked!</h2>
-            <div className="bg-white p-6 rounded-xl border-2 border-slate-200 shadow-sm transform rotate-1">
-              <p className="text-lg text-slate-600 italic font-medium">
-                "Zzz... I don't talk to trainers who slack off! 
-                <br/>
-                <span className="text-red-500 font-bold not-italic">Log at least 1 expense today</span> to wake me up."
-              </p>
-              <p className="text-right text-xs font-bold text-slate-400 mt-2">- Prof. Ledger</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 items-center">
-             <div className="flex items-center gap-2 text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full font-bold text-sm">
-                <Wallet size={16} />
-                <span>Expenses Logged Today: {userState.dailyStats.expensesLogged}/1</span>
-             </div>
-             <p className="text-xs text-slate-400">Go to the 'Item Bag (Budget)' tab to complete this task.</p>
-          </div>
-        </div>
-      </Card>
-    );
-  }
 
   return (
     <Card className="h-[600px] flex flex-col shadow-lg border-2 border-indigo-50" title={`Financial Advisor (Level ${userState.level})`}>

@@ -1,18 +1,7 @@
+
 import { useState } from 'react';
 import { Transaction, EvolutionForm, EvolutionAnalysisResult } from '../types';
-
-async function fetchEvolutionAnalysis(data: { transactions: Transaction[], savingsRate: number }): Promise<EvolutionAnalysisResult> {
-  const response = await fetch('/api/finmon-agent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      type: 'analyze_evolution', 
-      data 
-    }),
-  });
-  if (!response.ok) throw new Error('Evolution analysis failed');
-  return response.json();
-}
+import { getEvolutionAnalysis } from '../services/geminiService';
 
 export const useEvolutionLogic = () => {
   const [currentForm, setCurrentForm] = useState<EvolutionForm>('EGG');
@@ -22,7 +11,7 @@ export const useEvolutionLogic = () => {
   const checkEvolution = async (transactions: Transaction[], savingsRate: number) => {
     setIsEvolving(true);
     try {
-      const analysis = await fetchEvolutionAnalysis({ transactions, savingsRate });
+      const analysis = await getEvolutionAnalysis(transactions, savingsRate);
       setLastAnalysis(analysis);
       
       if (analysis.evolutionTriggered && analysis.suggestedForm !== currentForm) {

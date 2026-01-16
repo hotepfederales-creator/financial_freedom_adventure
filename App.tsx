@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints } from 'lucide-react';
+import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints, ShoppingBag } from 'lucide-react';
 import { UserState, DailyStats } from './types';
 import { Dashboard } from './components/Dashboard';
 import { BudgetPlanner } from './components/BudgetPlanner';
@@ -9,6 +10,7 @@ import { GamificationHub } from './components/GamificationHub';
 import { EvolutionScene } from './components/EvolutionScene';
 import { OnboardingTour } from './components/OnboardingTour';
 import { SocialRaids } from './components/SocialRaids';
+import { Marketplace } from './components/Marketplace';
 import { useWildNudge } from './hooks/useWildNudge';
 import { DevControlPanel } from './components/DevTools/DevControlPanel';
 import { RaidBoss } from './types/raidTypes';
@@ -35,10 +37,23 @@ const INITIAL_STATE: UserState = {
     budgetAnalyzed: 0,
     claimedQuests: []
   },
-  finMonChatHistory: []
+  finMonChatHistory: [],
+  ledgerChatHistory: [
+    {
+      id: 'init-story',
+      role: 'model',
+      text: "Welcome to the Region of Econo! I am Professor Ledger. I study the strange creatures known as 'FinMons'—spirits that are powered by financial habits. Look! A wild 'Debt-to-Income Ratio' is attacking your starter egg! Quick, we need to defend it! Do you have a budget?",
+      timestamp: Date.now()
+    }
+  ],
+  storyFlags: {
+    introSeen: true,
+    incomeSetSeen: false,
+    expenseLoggedSeen: false
+  }
 };
 
-type View = 'dashboard' | 'budget' | 'tax' | 'chat' | 'gamification' | 'raids';
+type View = 'dashboard' | 'budget' | 'tax' | 'chat' | 'gamification' | 'raids' | 'market';
 
 const App: React.FC = () => {
   const [userState, setUserState] = useState<UserState>(() => {
@@ -49,6 +64,9 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved);
         if (!parsed.dailyStats) parsed.dailyStats = INITIAL_STATE.dailyStats;
         if (!parsed.finMonChatHistory) parsed.finMonChatHistory = [];
+        // Migration for new story features
+        if (!parsed.ledgerChatHistory) parsed.ledgerChatHistory = INITIAL_STATE.ledgerChatHistory;
+        if (!parsed.storyFlags) parsed.storyFlags = INITIAL_STATE.storyFlags;
         return parsed;
       }
     }
@@ -206,13 +224,14 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (currentView) {
-      case 'dashboard': return <Dashboard userState={userState} onUpdateUser={updateUser} />;
+      case 'dashboard': return <Dashboard userState={userState} onUpdateUser={updateUser} onNavigate={setCurrentView} />;
       case 'budget': return <BudgetPlanner userState={userState} onUpdateUser={updateUser} addPoints={addPoints} incrementDailyStat={incrementDailyStat} />;
       case 'tax': return <TaxEstimator userState={userState} addPoints={addPoints} />;
-      case 'chat': return <FinancialChat userState={userState} addPoints={addPoints} incrementDailyStat={incrementDailyStat} />;
+      case 'chat': return <FinancialChat userState={userState} onUpdateUser={updateUser} addPoints={addPoints} incrementDailyStat={incrementDailyStat} />;
       case 'gamification': return <GamificationHub userState={userState} onUpdateUser={updateUser} addPoints={addPoints} />;
       case 'raids': return <SocialRaids externalRaidData={raidBoss} />;
-      default: return <Dashboard userState={userState} onUpdateUser={updateUser} />;
+      case 'market': return <Marketplace userState={userState} addPoints={addPoints} />;
+      default: return <Dashboard userState={userState} onUpdateUser={updateUser} onNavigate={setCurrentView} />;
     }
   };
 
@@ -298,6 +317,7 @@ const App: React.FC = () => {
             <SidebarLink view="dashboard" icon={LayoutDashboard} label="Battle Zone" />
             <SidebarLink view="budget" icon={Wallet} label="Item Bag" />
             <SidebarLink view="tax" icon={Calculator} label="Tax Gym" />
+            <SidebarLink view="market" icon={ShoppingBag} label="EconoMart" />
             <div className="my-4 border-t border-slate-100"></div>
             <div className="px-4 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Social</div>
             <SidebarLink view="chat" icon={MessageSquare} label="Prof. Ledger" />
@@ -334,6 +354,7 @@ const App: React.FC = () => {
                 {currentView === 'tax' && 'Tax Estimator'}
                 {currentView === 'chat' && 'Professor Ledger'}
                 {currentView === 'raids' && 'Co-op Raid Battles'}
+                {currentView === 'market' && 'EconoMart'}
                 {currentView === 'gamification' && 'Trainer Profile'}
               </h2>
               <p className="text-slate-500 text-sm mt-1">

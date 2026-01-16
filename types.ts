@@ -1,6 +1,8 @@
+
 export interface Transaction {
   id: string;
-  category: string;
+  description?: string; // e.g., "Starbucks", "Uber"
+  category: string;     // e.g., "Food", "Transport"
   amount: number;
   type: 'income' | 'expense';
   date: string;
@@ -21,6 +23,12 @@ export interface DailyStats {
   claimedQuests: string[];
 }
 
+export interface StoryFlags {
+  introSeen: boolean;
+  incomeSetSeen: boolean;
+  expenseLoggedSeen: boolean;
+}
+
 export interface UserState {
   points: number;
   level: number;
@@ -30,7 +38,9 @@ export interface UserState {
   monthlyIncome: number;
   achievements: string[]; // IDs of claimed achievements
   dailyStats: DailyStats;
-  finMonChatHistory: ChatMessage[]; // New: Chat history with the pet
+  finMonChatHistory: ChatMessage[]; // Chat history with the pet
+  ledgerChatHistory: ChatMessage[]; // Chat history with Professor Ledger
+  storyFlags: StoryFlags;
 }
 
 export interface Achievement {

@@ -1,8 +1,11 @@
+
 import React, { useState } from 'react';
 import { UserState, Transaction, BudgetAnalysis, DailyStats } from '../types';
 import { Card } from './ui/Card';
-import { Plus, Trash2, Sparkles, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Sparkles, AlertCircle, ArrowLeft, PenTool, GraduationCap } from 'lucide-react';
 import { getBudgetAnalysis } from '../services/geminiService';
+import { predictCategory } from '../services/learningService';
+import { CorrectionModal } from './CorrectionModal';
 
 interface BudgetPlannerProps {
   userState: UserState;
@@ -12,17 +15,33 @@ interface BudgetPlannerProps {
 }
 
 export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdateUser, addPoints, incrementDailyStat }) => {
+  const [newExpenseDesc, setNewExpenseDesc] = useState('');
   const [newExpenseCategory, setNewExpenseCategory] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<BudgetAnalysis | null>(null);
+  
+  // Correction State
+  const [editingTransId, setEditingTransId] = useState<string | null>(null);
+
+  const handleDescriptionChange = (desc: string) => {
+    setNewExpenseDesc(desc);
+    // Smart Prediction: Check if we learned this before
+    if (desc.length > 2) {
+      const predicted = predictCategory(desc);
+      if (predicted) {
+        setNewExpenseCategory(predicted);
+      }
+    }
+  };
 
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExpenseCategory || !newExpenseAmount) return;
 
     const newTransaction: Transaction = {
-      id: crypto.randomUUID(),
+      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+      description: newExpenseDesc || newExpenseCategory,
       category: newExpenseCategory,
       amount: parseFloat(newExpenseAmount),
       type: 'expense',
@@ -33,6 +52,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
       transactions: [...userState.transactions, newTransaction]
     });
 
+    setNewExpenseDesc('');
     setNewExpenseCategory('');
     setNewExpenseAmount('');
     addPoints(10); // Reward for logging expense
@@ -58,38 +78,98 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
      onUpdateUser({ monthlyIncome: parseFloat(val) || 0 });
   };
 
+  // Correction Handler
+  const handleCorrection = (id: string, newCategory: string) => {
+    const updated = userState.transactions.map(t => 
+      t.id === id ? { ...t, category: newCategory } : t
+    );
+    onUpdateUser({ transactions: updated });
+    addPoints(20); // Bonus for teaching the AI
+  };
+
+  const categories = [
+    "Food", "Housing", "Transport", "Entertainment", "Health", 
+    "Shopping", "Utilities", "Savings", "Investments", "Debt", "Other"
+  ];
+
   return (
     <div className="space-y-6">
+      {editingTransId && (
+        <CorrectionModal 
+          transactionName={userState.transactions.find(t => t.id === editingTransId)?.description || 'Unknown'}
+          currentCategory={userState.transactions.find(t => t.id === editingTransId)?.category || 'Unknown'}
+          onClose={() => setEditingTransId(null)}
+          onCorrect={(newCat) => handleCorrection(editingTransId, newCat)}
+        />
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Input Section */}
         <div className="lg:col-span-2 space-y-6">
           <Card title="Income & Expenses">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Monthly Net Income</label>
-                <div className="relative">
+                <label className="block text-sm font-medium text-slate-700 mb-2 flex justify-between">
+                    Monthly Net Income
+                    {userState.monthlyIncome === 0 && (
+                        <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                            Step 1: Start here!
+                        </span>
+                    )}
+                </label>
+                <div className="relative group">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">$</span>
                     <input
                       type="number"
                       value={userState.monthlyIncome || ''}
                       onChange={(e) => handleIncomeChange(e.target.value)}
-                      className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                          userState.monthlyIncome === 0 ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-slate-300'
+                      }`}
                       placeholder="0.00"
                     />
+                    {userState.monthlyIncome === 0 && (
+                       <div className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300 pointer-events-none">
+                           <ArrowLeft size={16} className="inline mr-1"/> Enter amount
+                       </div>
+                    )}
                 </div>
               </div>
 
               <div className="border-t border-slate-200 pt-6">
-                <h4 className="font-medium text-slate-800 mb-4">Add Expense</h4>
-                <form onSubmit={handleAddExpense} className="flex gap-3">
-                  <input
-                    type="text"
-                    value={newExpenseCategory}
-                    onChange={(e) => setNewExpenseCategory(e.target.value)}
-                    placeholder="Category (e.g. Rent, Food)"
-                    className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                  <div className="relative w-32">
+                <h4 className="font-medium text-slate-800 mb-4 flex justify-between">
+                    Add Expense
+                    {userState.monthlyIncome > 0 && userState.transactions.length === 0 && (
+                        <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                            Step 2: Log something!
+                        </span>
+                    )}
+                </h4>
+                <form onSubmit={handleAddExpense} className="flex flex-col md:flex-row gap-3">
+                  <div className="flex-1">
+                     <input
+                        type="text"
+                        value={newExpenseDesc}
+                        onChange={(e) => handleDescriptionChange(e.target.value)}
+                        placeholder="Description (e.g. Starbucks)"
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        required
+                     />
+                  </div>
+                  <div className="w-full md:w-40">
+                     <input 
+                        list="categories" 
+                        value={newExpenseCategory}
+                        onChange={(e) => setNewExpenseCategory(e.target.value)}
+                        placeholder="Category"
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        required
+                     />
+                     <datalist id="categories">
+                        {categories.map(c => <option key={c} value={c} />)}
+                     </datalist>
+                  </div>
+                  <div className="relative w-full md:w-32">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">$</span>
                     <input
                       type="number"
@@ -97,11 +177,12 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                       onChange={(e) => setNewExpenseAmount(e.target.value)}
                       placeholder="0.00"
                       className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      required
                     />
                   </div>
                   <button
                     type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg transition-colors"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center shadow-md active:translate-y-0.5"
                   >
                     <Plus size={24} />
                   </button>
@@ -112,8 +193,20 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                 <h4 className="font-medium text-slate-800 mb-2">Current Expenses</h4>
                 <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
                   {userState.transactions.filter(t => t.type === 'expense').map(t => (
-                    <div key={t.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
-                      <span className="text-slate-700">{t.category}</span>
+                    <div key={t.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100 group hover:border-indigo-200 transition-colors">
+                      <div>
+                          <p className="font-bold text-slate-700">{t.description || t.category}</p>
+                          <div className="flex items-center gap-2">
+                             <span className="text-xs text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">{t.category}</span>
+                             <button 
+                                onClick={() => setEditingTransId(t.id)}
+                                className="text-xs text-indigo-400 hover:text-indigo-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Teach AI correct category"
+                             >
+                                <GraduationCap size={12} /> Teach
+                             </button>
+                          </div>
+                      </div>
                       <div className="flex items-center gap-3">
                         <span className="font-semibold text-slate-900">${t.amount.toFixed(2)}</span>
                         <button
@@ -126,7 +219,10 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                     </div>
                   ))}
                   {userState.transactions.filter(t => t.type === 'expense').length === 0 && (
-                    <p className="text-slate-400 text-sm italic">No expenses added yet.</p>
+                    <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50">
+                        <p className="text-slate-400 text-sm italic">No expenses added yet.</p>
+                        <p className="text-xs text-indigo-400 mt-1">Your list is empty.</p>
+                    </div>
                   )}
                 </div>
               </div>

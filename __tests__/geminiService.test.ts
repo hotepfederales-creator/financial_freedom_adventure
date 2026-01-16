@@ -1,8 +1,14 @@
 import { getBudgetAnalysis, getTaxEstimate, getChatResponse } from '../services/geminiService';
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+
+// Declarations for Jest globals to satisfy TypeScript compiler
+declare const jest: any;
+declare const describe: any;
+declare const beforeEach: any;
+declare const test: any;
+declare const expect: any;
 
 // Mock global fetch
-global.fetch = vi.fn();
+global.fetch = jest.fn();
 
 describe('FinMon Verification Suite', () => {
   beforeEach(() => {
@@ -10,7 +16,7 @@ describe('FinMon Verification Suite', () => {
   });
 
   // --- 1. Functional Testing: Logic Check ---
-
+  
   test('Functional: getBudgetAnalysis returns structured data', async () => {
     const mockResponse = {
       healthScore: 85,
@@ -27,7 +33,7 @@ describe('FinMon Verification Suite', () => {
     const mockTransactions = [{ id: '1', amount: 50, category: 'Food', type: 'expense', date: '2023-01-01' }];
     // @ts-ignore
     const result = await getBudgetAnalysis(5000, mockTransactions);
-
+    
     expect(result.healthScore).toBe(85);
     expect(result.summary).toBe("It's super effective!");
     expect(global.fetch).toHaveBeenCalledWith('/api/finmon-agent', expect.objectContaining({
@@ -51,7 +57,7 @@ describe('FinMon Verification Suite', () => {
     });
 
     const result = await getTaxEstimate(100000, "California", "Single");
-
+    
     expect(result.estimatedTax).toBe(15000);
     expect(result.bracket).toBe("22%");
     expect(global.fetch).toHaveBeenCalledWith('/api/finmon-agent', expect.objectContaining({
@@ -71,17 +77,17 @@ describe('FinMon Verification Suite', () => {
 
     // @ts-ignore
     const result = await getBudgetAnalysis(5000, []);
-
+    
     // Should return default safe object, not crash
     expect(result.healthScore).toBe(0);
-    expect(result.summary).toContain("malfunctioning");
+    expect(result.summary).toContain("malfunctioning"); 
   });
 
   test('Resilience: getChatResponse handles Network Error gracefully', async () => {
     (global.fetch as any).mockRejectedValueOnce(new Error("Network Error"));
 
     const result = await getChatResponse([], "Hello");
-
+    
     expect(result).toContain("A wild error appeared");
   });
 

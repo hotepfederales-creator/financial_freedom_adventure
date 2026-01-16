@@ -65,7 +65,27 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
       parts: [{ text: m.text }]
     }));
 
-    const response = await getFinMonResponse(apiHistory, input, userState.finMon);
+    // Calculate Financial Context for the AI to give better tips
+    const expenses = userState.transactions.filter(t => t.type === 'expense');
+    const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
+    const income = userState.monthlyIncome;
+    
+    // Find top spending category
+    const categoryTotals: Record<string, number> = {};
+    expenses.forEach(t => {
+      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+    });
+    const topCategoryEntry = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
+    const topExpenseString = topCategoryEntry ? `${topCategoryEntry[0]} ($${topCategoryEntry[1]})` : 'None';
+    
+    const financialContext = {
+      income,
+      totalExpenses,
+      savingsRate: income > 0 ? ((income - totalExpenses) / income * 100).toFixed(1) : '0',
+      topExpense: topExpenseString
+    };
+
+    const response = await getFinMonResponse(apiHistory, input, userState.finMon, financialContext);
 
     const botMsg: ChatMessage = {
       id: crypto.randomUUID(),
