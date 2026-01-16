@@ -6,30 +6,40 @@ export interface Transaction {
   date: string;
 }
 
-export interface BudgetGoal {
-  id: string;
+export interface FinMonState {
   name: string;
-  targetAmount: number;
-  currentAmount: number;
-  deadline: string;
+  species: 'Coinlet' | 'Cashmander' | 'Wealthasaur' | 'Ledgerazard' | 'SQUIRREL' | 'HAWK' | 'TORTOISE' | 'PHOENIX';
+  stage: 1 | 2 | 3 | 4; // 1=Egg, 2=Baby, 3=Teen, 4=Master
+  mood: 'happy' | 'neutral' | 'sad';
+}
+
+export interface DailyStats {
+  date: string;
+  expensesLogged: number;
+  chatMessagesSent: number;
+  budgetAnalyzed: number;
+  claimedQuests: string[];
 }
 
 export interface UserState {
   points: number;
   level: number;
+  trainerName: string;
+  finMon: FinMonState;
   transactions: Transaction[];
-  goals: BudgetGoal[];
   monthlyIncome: number;
-  achievements: Achievement[];
+  achievements: string[]; // IDs of claimed achievements
+  dailyStats: DailyStats;
+  finMonChatHistory: ChatMessage[]; // New: Chat history with the pet
 }
 
 export interface Achievement {
   id: string;
   title: string;
   description: string;
-  icon: string;
-  unlocked: boolean;
-  pointsReward: number;
+  icon: any; // Lucide icon component
+  reward: number;
+  condition: (state: UserState) => boolean;
 }
 
 export interface ChatMessage {
@@ -53,3 +63,21 @@ export interface TaxEstimate {
   bracket: string;
   tips: string[];
 }
+
+// --- Dynamic Evolution Engine Types ---
+
+export type EvolutionForm = 'EGG' | 'SQUIRREL' | 'HAWK' | 'TORTOISE' | 'PHOENIX';
+
+export interface EvolutionAnalysisResult {
+  suggestedForm: EvolutionForm;
+  confidence: number;
+  reasoning: string;
+  evolutionTriggered: boolean;
+}
+
+export const EVOLUTION_RULES = {
+  SQUIRREL: "Frequent small savings transactions (>5 per month).",
+  HAWK: "High investment activity or aggressive debt repayment (>15% of income).",
+  TORTOISE: "Consistent spending within 5% of budget for 3 months.",
+  PHOENIX: "Recovered from a negative balance or cleared a major debt."
+};

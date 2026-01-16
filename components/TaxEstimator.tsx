@@ -1,19 +1,59 @@
 import React, { useState } from 'react';
 import { Card } from './ui/Card';
-import { TaxEstimate } from '../types';
+import { TaxEstimate, UserState } from '../types';
 import { getTaxEstimate } from '../services/geminiService';
-import { Calculator, Info } from 'lucide-react';
+import { Calculator, Info, Lock } from 'lucide-react';
 
 interface TaxEstimatorProps {
+  userState: UserState;
   addPoints: (amount: number) => void;
 }
 
-export const TaxEstimator: React.FC<TaxEstimatorProps> = ({ addPoints }) => {
+export const TaxEstimator: React.FC<TaxEstimatorProps> = ({ userState, addPoints }) => {
   const [income, setIncome] = useState<string>('');
   const [location, setLocation] = useState<string>('');
   const [filingStatus, setFilingStatus] = useState<string>('Single');
   const [estimate, setEstimate] = useState<TaxEstimate | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Lock Logic: Requires Level 3
+  if (userState.level < 3) {
+    return (
+      <Card className="max-w-4xl mx-auto h-[500px] flex items-center justify-center relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-slate-50 opacity-50 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        
+        <div className="relative z-10 text-center space-y-8 max-w-md p-6 animate-fade-in">
+           <div className="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mx-auto border-4 border-slate-300 shadow-inner">
+             <Lock size={48} className="text-slate-500" />
+           </div>
+
+           <div>
+             <h2 className="text-3xl font-black text-slate-800 uppercase tracking-wide">Gym Closed</h2>
+             <p className="text-slate-600 mt-3 font-medium text-lg leading-relaxed">
+               The Tax Gym is reserved for experienced Trainers. 
+               <br/>
+               <span className="text-sm text-slate-500">Novices aren't ready for the complexities of the IRS (Internal Revenue Snorlax).</span>
+             </p>
+           </div>
+
+           <div className="bg-white p-6 rounded-xl border-2 border-slate-200 shadow-md transform hover:scale-105 transition-transform">
+             <div className="flex justify-between text-sm font-bold mb-2">
+               <span className="text-slate-500 uppercase text-xs">Progress to Unlock</span>
+               <span className="text-indigo-600">Level {userState.level} / 3</span>
+             </div>
+             <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+               <div 
+                 className="h-full bg-indigo-500 transition-all duration-1000 ease-out" 
+                 style={{ width: `${Math.min(100, (userState.level / 3) * 100)}%` }}
+               ></div>
+             </div>
+             <p className="text-xs text-slate-400 mt-3 font-semibold">Earn XP by logging expenses and completing quests to level up!</p>
+           </div>
+        </div>
+      </Card>
+    );
+  }
 
   const handleEstimate = async (e: React.FormEvent) => {
     e.preventDefault();

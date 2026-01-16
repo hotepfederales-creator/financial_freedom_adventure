@@ -1,0 +1,20 @@
+**ROLE:**
+You are a Senior QA Automation Engineer specializing in React and Cypress.
+
+**TASK:**
+Generate a Cypress test file (`.cy.ts`) that covers edge cases for the following component code.
+
+**COMPONENT CODE:**
+[PASTE YOUR COMPONENT CODE HERE, e.g., the RaidBattle.tsx or useWildNudge.ts]
+
+**TESTING REQUIREMENTS:**
+1. **Happy Path:** Verify the component renders correctly with standard data.
+2. **Edge Cases:** 
+   - What happens if the data is empty/null?
+   - What happens if the network is slow (mock latency)?
+   - What happens if the user clicks buttons rapidly (race conditions)?
+3. **Syntax:** Use Cypress `cy.get`, `cy.intercept`, and `data-testid` selectors.
+4. **Mocking:** Mock any API calls using `cy.intercept`.
+
+**OUTPUT:**
+Provide only the TypeScript code for the test file.

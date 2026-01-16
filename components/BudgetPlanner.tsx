@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserState, Transaction, BudgetAnalysis } from '../types';
+import { UserState, Transaction, BudgetAnalysis, DailyStats } from '../types';
 import { Card } from './ui/Card';
 import { Plus, Trash2, Sparkles, AlertCircle } from 'lucide-react';
 import { getBudgetAnalysis } from '../services/geminiService';
@@ -8,9 +8,10 @@ interface BudgetPlannerProps {
   userState: UserState;
   onUpdateUser: (newState: Partial<UserState>) => void;
   addPoints: (amount: number) => void;
+  incrementDailyStat: (key: keyof Omit<DailyStats, 'date' | 'claimedQuests'>) => void;
 }
 
-export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdateUser, addPoints }) => {
+export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdateUser, addPoints, incrementDailyStat }) => {
   const [newExpenseCategory, setNewExpenseCategory] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -35,6 +36,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
     setNewExpenseCategory('');
     setNewExpenseAmount('');
     addPoints(10); // Reward for logging expense
+    incrementDailyStat('expensesLogged');
   };
 
   const handleRemoveTransaction = (id: string) => {
@@ -49,6 +51,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
     setAnalysis(result);
     setIsAnalyzing(false);
     addPoints(50); // Reward for using AI
+    incrementDailyStat('budgetAnalyzed');
   };
 
   const handleIncomeChange = (val: string) => {

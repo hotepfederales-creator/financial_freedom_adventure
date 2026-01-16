@@ -1,59 +1,52 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { Transaction, BudgetAnalysis, TaxEstimate } from "../types";
+import { Transaction, BudgetAnalysis, TaxEstimate, FinMonState } from "../types";
+import { saveMemory, getRelevantContext } from "./memoryService";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// Add this helper at the top
+const getBaseUrl = () => {
+  // If running on device/emulator, point to your hosted backend or local IP
+  // For Prod: return 'https://your-vercel-app.vercel.app';
+  // For Dev: return 'http://192.168.1.XX:3000';
+  return process.env.NEXT_PUBLIC_API_URL || '';
+};
 
-const MODEL_FLASH = 'gemini-3-flash-preview';
+// Helper to extract [[MEMORY:CAT:CONTENT]] tags
+const extractAndSaveMemories = (text: string): string => {
+  const regex = /\[\[MEMORY:([A-Z]+):(.*?)\]\]/g;
+  let cleanText = text;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    const category = match[1] as any;
+    const content = match[2].trim();
+    saveMemory(category, content);
+    // Remove the tag from the displayed text
+    cleanText = cleanText.replace(match[0], '');
+  }
+  return cleanText;
+};
 
 export const getBudgetAnalysis = async (
   income: number,
   transactions: Transaction[]
 ): Promise<BudgetAnalysis> => {
   try {
-    const expenses = transactions.filter(t => t.type === 'expense');
-    const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
-
-    const prompt = `
-      Analyze this monthly budget:
-      Monthly Income: $${income}
-      Expenses: ${JSON.stringify(expenses)}
-      Total Expenses: $${totalExpenses}
-
-      Provide a health score (0-100), a brief summary, 3 actionable recommendations to save money, and potential monthly savings if recommendations are followed.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: MODEL_FLASH,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            healthScore: { type: Type.NUMBER },
-            summary: { type: Type.STRING },
-            recommendations: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            savingsPotential: { type: Type.NUMBER }
-          },
-          required: ["healthScore", "summary", "recommendations", "savingsPotential"]
-        }
-      }
+    const response = await fetch(`${getBaseUrl()}/api/finmon-agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'analyze_budget',
+        data: { income, transactions }
+      }),
     });
 
-    const text = response.text;
-    if (!text) throw new Error("No response from AI");
-    return JSON.parse(text) as BudgetAnalysis;
-
+    if (!response.ok) throw new Error("Server error");
+    return await response.json();
   } catch (error) {
     console.error("Budget Analysis Error:", error);
     return {
       healthScore: 0,
-      summary: "Could not analyze budget at this time.",
-      recommendations: ["Check your network connection."],
+      summary: "My scanner is malfunctioning! I can't read your financial data right now.",
+      recommendations: ["Check your internet connection."],
       savingsPotential: 0
     };
   }
@@ -65,40 +58,17 @@ export const getTaxEstimate = async (
   filingStatus: string
 ): Promise<TaxEstimate> => {
   try {
-    const prompt = `
-      Estimate taxes for a user with:
-      Annual Gross Income: $${income}
-      Location: ${location}
-      Filing Status: ${filingStatus}
-
-      Provide estimated total tax, effective tax rate, take home pay, likely tax bracket, and 2 quick tax tips.
-      Assume standard deduction for the current tax year. This is for educational purposes only.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: MODEL_FLASH,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            estimatedTax: { type: Type.NUMBER },
-            effectiveRate: { type: Type.NUMBER },
-            takeHomePay: { type: Type.NUMBER },
-            bracket: { type: Type.STRING },
-            tips: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            }
-          }
-        }
-      }
+    const response = await fetch(`${getBaseUrl()}/api/finmon-agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'estimate_tax',
+        data: { income, location, filingStatus }
+      }),
     });
 
-    const text = response.text;
-    if (!text) throw new Error("No response from AI");
-    return JSON.parse(text) as TaxEstimate;
+    if (!response.ok) throw new Error("Server error");
+    return await response.json();
   } catch (error) {
     console.error("Tax Estimate Error:", error);
     throw error;
@@ -107,21 +77,64 @@ export const getTaxEstimate = async (
 
 export const getChatResponse = async (
   history: { role: string; parts: { text: string }[] }[],
-  message: string
+  message: string,
+  userLevel: number = 1
 ): Promise<string> => {
   try {
-    const chat = ai.chats.create({
-      model: MODEL_FLASH,
-      history: history,
-      config: {
-        systemInstruction: "You are a helpful, encouraging, and knowledgeable financial advisor. Keep answers concise (under 150 words) unless asked for detail. Use formatting like bullet points for readability."
-      }
+    // 1. Retrieve Context
+    const memoryContext = getRelevantContext(message);
+
+    const response = await fetch(`${getBaseUrl()}/api/finmon-agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'chat_professor',
+        history,
+        message,
+        userLevel,
+        memoryContext // Pass to API
+      }),
     });
 
-    const result = await chat.sendMessage({ message });
-    return result.text || "I'm having trouble thinking right now.";
+    const data = await response.json();
+    const rawText = data.response || "I'm studying my ledger... ask again in a moment.";
+
+    // 2. Process Memories
+    return extractAndSaveMemories(rawText);
   } catch (error) {
     console.error("Chat Error:", error);
-    return "Sorry, I encountered an error. Please try again.";
+    return "A wild error appeared! Please try again.";
+  }
+};
+
+export const getFinMonResponse = async (
+  history: { role: string; parts: { text: string }[] }[],
+  message: string,
+  finMonState: FinMonState
+): Promise<string> => {
+  try {
+    // FinMon also gets context, though maybe less complex
+    const memoryContext = getRelevantContext(message);
+
+    const response = await fetch(`${getBaseUrl()}/api/finmon-agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'chat_finmon',
+        history,
+        message,
+        finMonState,
+        memoryContext
+      }),
+    });
+
+    const data = await response.json();
+    const rawText = data.response || "...";
+
+    // Process Memories (FinMon might remember "User likes apples")
+    return extractAndSaveMemories(rawText);
+  } catch (error) {
+    console.error("FinMon Chat Error:", error);
+    return "Zzz...";
   }
 };

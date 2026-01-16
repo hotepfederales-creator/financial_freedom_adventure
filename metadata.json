@@ -1,5 +1,5 @@
 {
-  "name": "Budget Builder App",
-  "description": "A gamified, AI-powered financial assistant that helps you budget, estimate taxes, and learn financial literacy through interactive challenges and Gemini-powered insights.",
+  "name": "FinMon Trainer",
+  "description": "A Pokémon-inspired financial assistant where you raise a 'FinMon' creature by managing your budget, completing tax quests, and learning from Professor Ledger.",
   "requestFramePermissions": []
 }
