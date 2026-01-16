@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { ChevronRight, ChevronLeft, LayoutDashboard, Wallet, MessageSquare, Award, Ghost, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, LayoutDashboard, Wallet, MessageSquare, Award, Ghost, X, Heart, TrendingUp } from 'lucide-react';
 
 interface OnboardingTourProps {
   isOpen: boolean;
@@ -15,9 +16,21 @@ const STEPS = [
   },
   {
     title: "The Battle Zone",
-    desc: "Your Dashboard is your command center. Monitor your HP (Savings), track Damage (Expenses), and check your FinMon's mood.",
+    desc: "Your Dashboard is your command center. Monitor your HP (Savings) and Damage (Expenses). Keep your HP high to survive!",
     icon: LayoutDashboard,
     color: "bg-slate-800"
+  },
+  {
+    title: "Mood Mechanics",
+    desc: "Your FinMon reacts to your budget health. >50% Savings = Happy. <20% Savings = Sad. To cheer it up, log more Income or reduce Expenses!",
+    icon: Heart,
+    color: "bg-pink-500"
+  },
+  {
+    title: "Evolution & Growth",
+    desc: "Every smart decision earns XP. As you level up, your FinMon evolves from an Egg to a Legendary beast. Your financial habits shape its form!",
+    icon: TrendingUp,
+    color: "bg-purple-600"
   },
   {
     title: "Item Bag (Budget)",

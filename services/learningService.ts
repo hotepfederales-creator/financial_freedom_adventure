@@ -57,3 +57,9 @@ export const getAllRules = (): LearningRule[] => {
   if (typeof window === 'undefined') return [];
   return JSON.parse(localStorage.getItem(RULES_STORAGE_KEY) || '[]');
 };
+
+export const clearRules = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(RULES_STORAGE_KEY);
+  console.log("Learned rules wiped.");
+};

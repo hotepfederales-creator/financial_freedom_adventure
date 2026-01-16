@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints, ShoppingBag, Terminal, Book } from 'lucide-react';
 import { UserState, DailyStats } from './types';
 import { Dashboard } from './components/Dashboard';
 import { BudgetPlanner } from './components/BudgetPlanner';
@@ -14,6 +14,10 @@ import { Marketplace } from './components/Marketplace';
 import { useWildNudge } from './hooks/useWildNudge';
 import { DevControlPanel } from './components/DevTools/DevControlPanel';
 import { RaidBoss } from './types/raidTypes';
+import { useAppUpdate } from './hooks/useAppUpdate';
+import { ChangelogModal } from './components/Updates/ChangelogModal';
+import { TrainerHandbookModal } from './components/TrainerHandbookModal';
+import { APP_VERSION } from './data/changelog';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -76,10 +80,14 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isHandbookOpen, setIsHandbookOpen] = useState(false);
   
   // Wild Nudge Hook
   const { activeNudge, dismissNudge, triggerNudge } = useWildNudge();
   
+  // Update Checker Hook
+  const { showChangelog, dismissChangelog } = useAppUpdate();
+
   // Evolution Animation State
   const [evolutionData, setEvolutionData] = useState<{from: 1|2|3|4, to: 1|2|3|4} | null>(null);
   const prevStageRef = useRef<1|2|3|4>(userState.finMon.stage);
@@ -111,6 +119,7 @@ const App: React.FC = () => {
   const handleOnboardingComplete = () => {
     localStorage.setItem('finmon_has_onboarded', 'true');
     setShowOnboarding(false);
+    setIsHandbookOpen(true); // Open handbook after onboarding
   };
 
   // Daily Reset Logic
@@ -239,6 +248,8 @@ const App: React.FC = () => {
     <div className="flex min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
       
       <OnboardingTour isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
+      <ChangelogModal isOpen={showChangelog} onClose={dismissChangelog} />
+      <TrainerHandbookModal isOpen={isHandbookOpen} onClose={() => setIsHandbookOpen(false)} />
       
       <DevControlPanel 
          triggerNudge={triggerNudge}
@@ -323,6 +334,18 @@ const App: React.FC = () => {
             <SidebarLink view="chat" icon={MessageSquare} label="Prof. Ledger" />
             <SidebarLink view="raids" icon={Swords} label="Raid Battles" />
             <SidebarLink view="gamification" icon={Award} label="Trainer Card" />
+            
+            {/* Handbook Button */}
+            <button
+              onClick={() => {
+                setIsHandbookOpen(true);
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 text-left font-semibold text-sm tracking-wide text-indigo-600 hover:bg-indigo-50 mt-2"
+            >
+              <Book size={20} className="text-indigo-500" />
+              <span>Handbook</span>
+            </button>
         </nav>
 
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
@@ -339,6 +362,14 @@ const App: React.FC = () => {
                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Trainer</p>
                  <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{userState.points} XP</p>
                </div>
+             </div>
+             
+             {/* Version Marker */}
+             <div className="mt-3 text-center flex items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+               <Terminal size={10} className="text-slate-400" />
+               <p className="text-[10px] font-mono text-slate-400 cursor-default select-none tracking-widest">
+                 BUILD {APP_VERSION}
+               </p>
              </div>
         </div>
       </aside>

@@ -1,3 +1,4 @@
+
 import { Memory } from '../types/memoryTypes';
 
 const MEMORY_KEY = 'finmon_long_term_memory';
@@ -33,4 +34,10 @@ export const getRelevantContext = (userQuery: string): string => {
   if (relevant.length === 0) return '';
   
   return `[MEMORY CONTEXT]: The user previously mentioned: ${relevant.map(m => `(${m.category}) ${m.content}`).join('; ')}.`;
+};
+
+export const clearMemories = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(MEMORY_KEY);
+  console.log("Long-term memories wiped.");
 };

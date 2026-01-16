@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
-import { saveMemory } from '../../services/memoryService';
+import { saveMemory, clearMemories } from '../../services/memoryService';
+import { clearRules } from '../../services/learningService';
 import { MOCKED_ZONES } from '../../data/dangerZones';
 
 // Props to allow manipulating parent state
@@ -44,13 +46,22 @@ export const DevControlPanel: React.FC<DevPanelProps> = ({ triggerNudge, trigger
               Inject "Wants Tesla"
             </button>
             <button 
-              className="w-full bg-red-900 text-white p-1 rounded hover:bg-red-800 transition-colors"
+              className="w-full bg-red-900 text-white p-1 mb-1 rounded hover:bg-red-800 transition-colors"
               onClick={() => {
-                localStorage.removeItem('finmon_long_term_memory');
-                alert('Memory Wiped');
+                clearMemories();
+                alert('Long-Term Memory Wiped');
               }}
             >
-              Wipe Memory
+              Wipe Memories
+            </button>
+            <button 
+              className="w-full bg-orange-900 text-white p-1 rounded hover:bg-orange-800 transition-colors"
+              onClick={() => {
+                clearRules();
+                alert('Learned Rules Wiped');
+              }}
+            >
+              Wipe Learned Rules
             </button>
           </div>
 
