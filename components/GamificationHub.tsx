@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { UserState, Achievement } from '../types';
 import { Card } from './ui/Card';
-import { Trophy, Star, Target, ShieldCheck, User, BookOpen, X, ArrowRight, CheckCircle, Lock, Wallet, Zap, Brain, PiggyBank } from 'lucide-react';
+import { Trophy, Star, Target, ShieldCheck, User, BookOpen, X, ArrowRight, CheckCircle, Lock, Wallet, Zap, Brain, PiggyBank, Swords, TrendingUp, Database, MessageSquare } from 'lucide-react';
 import { FinMon } from './FinMon';
 
 interface GamificationHubProps {
@@ -138,6 +139,38 @@ export const GamificationHub: React.FC<GamificationHubProps> = ({ userState, onU
          const exp = s.transactions.filter(t=>t.type==='expense').reduce((a,b)=>a+b.amount,0);
          return exp < (s.monthlyIncome * 0.5) && exp > 0;
       }
+    },
+    {
+      id: 'debt_slayer',
+      title: 'Debt Slayer',
+      description: 'Log a payment towards "Debt"',
+      icon: Swords,
+      reward: 75,
+      condition: (s) => s.transactions.some(t => t.category === 'Debt' && t.type === 'expense')
+    },
+    {
+      id: 'investor_initiate',
+      title: 'Future Tycoon',
+      description: 'Log an "Investments" contribution',
+      icon: TrendingUp,
+      reward: 150,
+      condition: (s) => s.transactions.some(t => t.category === 'Investments')
+    },
+    {
+      id: 'data_hoarder',
+      title: 'Data Collector',
+      description: 'Log 20 total transactions',
+      icon: Database,
+      reward: 100,
+      condition: (s) => s.transactions.length >= 20
+    },
+    {
+      id: 'curious_mind',
+      title: 'Curious Mind',
+      description: 'Send 10 messages to Prof. Ledger',
+      icon: MessageSquare,
+      reward: 50,
+      condition: (s) => (s.ledgerChatHistory?.filter(m => m.role === 'user').length || 0) >= 10
     }
   ];
 

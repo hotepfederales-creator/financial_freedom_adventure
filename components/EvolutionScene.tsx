@@ -13,7 +13,7 @@ export const EvolutionScene: React.FC<EvolutionSceneProps> = ({ fromStage, toSta
   const [phase, setPhase] = useState<'intro' | 'evolving' | 'flash' | 'reveal'>('intro');
 
   useEffect(() => {
-    let timeouts: NodeJS.Timeout[] = [];
+    let timeouts: ReturnType<typeof setTimeout>[] = [];
 
     // Sequence timing
     timeouts.push(setTimeout(() => setPhase('evolving'), 2000));
