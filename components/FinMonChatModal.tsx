@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { UserState, ChatMessage } from '../types';
 import { X, Send, Ghost } from 'lucide-react';
@@ -123,7 +124,7 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
         <div className="bg-white/80 p-4 border-b border-slate-200 flex justify-between items-center backdrop-blur">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 relative">
-               <FinMon stage={userState.finMon.stage} mood={userState.finMon.mood} />
+               <FinMon stage={userState.finMon.stage} mood={userState.finMon.mood} species={userState.finMon.species as any} />
             </div>
             <div>
               <h3 className="font-bold text-slate-800">{userState.finMon.name}</h3>

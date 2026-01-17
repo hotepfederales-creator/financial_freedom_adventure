@@ -2,8 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UserState, ChatMessage, DailyStats } from '../types';
 import { Card } from './ui/Card';
-import { Send, Bot, User, Lock, Wallet } from 'lucide-react';
+import { Send, User, Lock, Wallet } from 'lucide-react';
 import { getChatResponse } from '../services/geminiService';
+import { ProfLedgerAvatar } from './ProfLedgerAvatar';
 
 interface FinancialChatProps {
   userState: UserState;
@@ -37,7 +38,7 @@ export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, onUpdat
         newMessages.push({
             id: 'story-income',
             role: 'model',
-            text: "Excellent! Your 'Income Shield' is up. The egg is safe... for now. But to help it hatch, we need to feed it 'Data Berries'. Can you tell me your top 3 expenses? (Log them in the 'Item Bag' tab!)",
+            text: "Ah! There we go! Your 'Income Shield' is active. That wasn't so hard, was it? Now, the egg needs 'Data Berries' to hatch. I need you to log your TOP 3 EXPENSES in the Item Bag. Don't lie to me—I'll know.",
             timestamp: Date.now()
         });
         updatedFlags.incomeSetSeen = true;
@@ -49,7 +50,7 @@ export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, onUpdat
         newMessages.push({
             id: 'story-expense',
             role: 'model',
-            text: "Aha! Your egg is shaking... It's hatching into a 'Budget Sprout'! This little one is weak against 'Impulse Buys' but strong against 'Planning'. Listen closely, Trainer. Every time you save money, this Sprout gains XP. If you overspend, it takes damage. Are you ready to become a FinMon Master?",
+            text: "Great Scott! The egg is shaking... It's hatching into a 'Budget Sprout'! This creature feeds on savings. If you overspend, it withers. If you save, it evolves. Simple, right? Even a Rookie could understand that.",
             timestamp: Date.now() + 500 // Slight delay
         });
         updatedFlags.expenseLoggedSeen = true;
@@ -108,37 +109,43 @@ export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, onUpdat
     <Card className="h-[600px] flex flex-col shadow-lg border-2 border-indigo-50" title={`Financial Advisor (Level ${userState.level})`}>
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50"
+        className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50/50"
       >
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md border-2 border-white ${
-              msg.role === 'model' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-700 text-white'
-            }`}>
-              {msg.role === 'model' ? <Bot size={20} /> : <User size={20} />}
-            </div>
-            <div className={`max-w-[80%] p-4 rounded-2xl text-sm shadow-sm ${
+            {msg.role === 'model' ? (
+                 <ProfLedgerAvatar className="w-12 h-12 flex-shrink-0" emotion={msg.text.includes('!') ? 'shocked' : 'neutral'} />
+            ) : (
+                <div className="w-10 h-10 rounded-full bg-slate-700 text-white flex items-center justify-center flex-shrink-0 shadow-md border-2 border-white">
+                     <User size={20} />
+                </div>
+            )}
+            
+            <div className={`max-w-[80%] p-5 rounded-2xl text-sm shadow-sm relative ${
               msg.role === 'model' 
-                ? 'bg-white border border-slate-200 text-slate-700 rounded-tl-none' 
+                ? 'bg-amber-50 border-2 border-amber-200 text-amber-900 rounded-tl-none' 
                 : 'bg-indigo-600 text-white rounded-tr-none'
             }`}>
-              <div className="whitespace-pre-wrap leading-relaxed">{msg.text}</div>
+              {/* Little triangle for speech bubble */}
+              <div className={`absolute top-0 w-0 h-0 border-8 border-transparent ${
+                  msg.role === 'model' ? '-left-[18px] border-t-amber-200 border-r-0' : '-right-2 border-t-indigo-600 border-l-0'
+              }`}></div>
+              
+              <div className="whitespace-pre-wrap leading-relaxed font-medium">{msg.text}</div>
             </div>
           </div>
         ))}
         {loading && (
           <div className="flex items-start gap-3">
-             <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center border-2 border-white shadow-md">
-               <Bot size={20} />
-             </div>
-             <div className="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none shadow-sm">
+             <ProfLedgerAvatar className="w-12 h-12 animate-pulse" />
+             <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl rounded-tl-none shadow-sm">
                <div className="flex space-x-1 h-5 items-center">
-                 <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                 <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                 <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                 <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                 <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                 <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                </div>
              </div>
           </div>

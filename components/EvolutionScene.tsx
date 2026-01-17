@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FinMon } from './FinMon';
 import { Sparkles } from 'lucide-react';
@@ -5,11 +6,12 @@ import { Sparkles } from 'lucide-react';
 interface EvolutionSceneProps {
   fromStage: 1 | 2 | 3 | 4;
   toStage: 1 | 2 | 3 | 4;
+  species?: string;
   finMonName: string;
   onClose: () => void;
 }
 
-export const EvolutionScene: React.FC<EvolutionSceneProps> = ({ fromStage, toStage, finMonName, onClose }) => {
+export const EvolutionScene: React.FC<EvolutionSceneProps> = ({ fromStage, toStage, species, finMonName, onClose }) => {
   const [phase, setPhase] = useState<'intro' | 'evolving' | 'flash' | 'reveal'>('intro');
 
   useEffect(() => {
@@ -43,10 +45,10 @@ export const EvolutionScene: React.FC<EvolutionSceneProps> = ({ fromStage, toSta
                 }`}>
                     {phase === 'reveal' ? (
                         <div className="animate-fade-in-up">
-                           <FinMon stage={toStage} mood="happy" />
+                           <FinMon stage={toStage} species={species} mood="happy" />
                         </div>
                     ) : (
-                        // During evolving, toggle brightness/color rapidly via CSS animation in production, or just simplistic filter here
+                        // During evolving, show previous form. If evolving from Stage 1/2, use linear species.
                         <FinMon stage={fromStage} mood="neutral" className={phase === 'evolving' ? 'grayscale contrast-200' : ''} />
                     )}
                 </div>

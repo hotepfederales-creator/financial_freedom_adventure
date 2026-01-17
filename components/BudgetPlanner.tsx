@@ -1,20 +1,22 @@
-
 import React, { useState } from 'react';
 import { UserState, Transaction, BudgetAnalysis, DailyStats } from '../types';
 import { Card } from './ui/Card';
-import { Plus, Trash2, Sparkles, AlertCircle, ArrowLeft, PenTool, GraduationCap } from 'lucide-react';
+import { Plus, Trash2, Sparkles, AlertCircle, ArrowLeft, PenTool, GraduationCap, ArrowRight, MessageSquare, Zap } from 'lucide-react';
 import { getBudgetAnalysis } from '../services/geminiService';
 import { predictCategory } from '../services/learningService';
 import { CorrectionModal } from './CorrectionModal';
+import { JuicyButton } from './ui/JuicyButton';
+import { damageBus } from './Visuals/DamageFeedback';
 
 interface BudgetPlannerProps {
   userState: UserState;
   onUpdateUser: (newState: Partial<UserState>) => void;
   addPoints: (amount: number) => void;
   incrementDailyStat: (key: keyof Omit<DailyStats, 'date' | 'claimedQuests'>) => void;
+  onNavigate: (view: 'dashboard' | 'budget' | 'tax' | 'chat' | 'gamification' | 'raids') => void;
 }
 
-export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdateUser, addPoints, incrementDailyStat }) => {
+export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdateUser, addPoints, incrementDailyStat, onNavigate }) => {
   const [newExpenseDesc, setNewExpenseDesc] = useState('');
   const [newExpenseCategory, setNewExpenseCategory] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
@@ -38,12 +40,14 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExpenseCategory || !newExpenseAmount) return;
+    
+    const amount = parseFloat(newExpenseAmount);
 
     const newTransaction: Transaction = {
       id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
       description: newExpenseDesc || newExpenseCategory,
       category: newExpenseCategory,
-      amount: parseFloat(newExpenseAmount),
+      amount: amount,
       type: 'expense',
       date: new Date().toISOString()
     };
@@ -51,6 +55,9 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
     onUpdateUser({
       transactions: [...userState.transactions, newTransaction]
     });
+
+    // Trigger Visual Feedback
+    damageBus.emit(amount);
 
     setNewExpenseDesc('');
     setNewExpenseCategory('');
@@ -76,6 +83,12 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
 
   const handleIncomeChange = (val: string) => {
      onUpdateUser({ monthlyIncome: parseFloat(val) || 0 });
+  };
+
+  // Special handler to move to chat
+  const handleLockInIncome = () => {
+    // Navigate to Chat to trigger the Professor's specific dialogue
+    onNavigate('chat');
   };
 
   // Correction Handler
@@ -117,21 +130,35 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                         </span>
                     )}
                 </label>
-                <div className="relative group">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">$</span>
-                    <input
-                      type="number"
-                      value={userState.monthlyIncome || ''}
-                      onChange={(e) => handleIncomeChange(e.target.value)}
-                      className={`w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
-                          userState.monthlyIncome === 0 ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-slate-300'
-                      }`}
-                      placeholder="0.00"
-                    />
-                    {userState.monthlyIncome === 0 && (
-                       <div className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300 pointer-events-none">
-                           <ArrowLeft size={16} className="inline mr-1"/> Enter amount
-                       </div>
+                <div className="flex gap-3">
+                    <div className="relative group flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">$</span>
+                        <input
+                        type="number"
+                        value={userState.monthlyIncome || ''}
+                        onChange={(e) => handleIncomeChange(e.target.value)}
+                        className={`w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                            userState.monthlyIncome === 0 ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-slate-300'
+                        }`}
+                        placeholder="0.00"
+                        />
+                        {userState.monthlyIncome === 0 && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300 pointer-events-none hidden md:block">
+                            <ArrowLeft size={16} className="inline mr-1"/> Enter amount
+                        </div>
+                        )}
+                    </div>
+                    
+                    {/* Interactivity Booster: Quick Navigate Button */}
+                    {userState.monthlyIncome > 0 && (
+                        <JuicyButton 
+                            onClick={handleLockInIncome}
+                            variant="primary"
+                            size="sm"
+                            className="text-xs"
+                        >
+                            <MessageSquare size={16} /> Meet Professor
+                        </JuicyButton>
                     )}
                 </div>
               </div>
@@ -145,14 +172,14 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                         </span>
                     )}
                 </h4>
-                <form onSubmit={handleAddExpense} className="flex flex-col md:flex-row gap-3">
-                  <div className="flex-1">
+                <form onSubmit={handleAddExpense} className="flex flex-col md:flex-row gap-3 items-end">
+                  <div className="flex-1 w-full">
                      <input
                         type="text"
                         value={newExpenseDesc}
                         onChange={(e) => handleDescriptionChange(e.target.value)}
                         placeholder="Description (e.g. Starbucks)"
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         required
                      />
                   </div>
@@ -162,7 +189,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                         value={newExpenseCategory}
                         onChange={(e) => setNewExpenseCategory(e.target.value)}
                         placeholder="Category"
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         required
                      />
                      <datalist id="categories">
@@ -176,22 +203,24 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                       value={newExpenseAmount}
                       onChange={(e) => setNewExpenseAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full pl-8 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       required
                     />
                   </div>
-                  <button
+                  <JuicyButton
                     type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center shadow-md active:translate-y-0.5"
+                    variant="danger"
+                    size="md"
+                    className="w-full md:w-auto"
                   >
                     <Plus size={24} />
-                  </button>
+                  </JuicyButton>
                 </form>
               </div>
 
               <div className="mt-4">
                 <h4 className="font-medium text-slate-800 mb-2">Current Expenses</h4>
-                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                   {userState.transactions.filter(t => t.type === 'expense').map(t => (
                     <div key={t.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100 group hover:border-indigo-200 transition-colors">
                       <div>
@@ -241,15 +270,14 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                <p className="text-slate-600 mb-6 text-sm">
                  Get personalized insights and actionable tips to optimize your budget.
                </p>
-               <button
+               <JuicyButton
                  onClick={handleAnalyze}
                  disabled={isAnalyzing || userState.monthlyIncome === 0}
-                 className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all shadow-md
-                   ${isAnalyzing || userState.monthlyIncome === 0 ? 'bg-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg transform hover:-translate-y-0.5'}
-                 `}
+                 variant="primary"
+                 className="w-full"
                >
                  {isAnalyzing ? 'Analyzing...' : 'Analyze My Budget'}
-               </button>
+               </JuicyButton>
             </div>
 
             {analysis && (

@@ -1,10 +1,11 @@
-
 import React, { useState } from 'react';
 import { UserState } from '../types';
 import { Card } from './ui/Card';
 import { CheckoutModal } from './Shop/CheckoutModal';
 import { CheckoutDebugger } from './DevTools/CheckoutDebugger';
 import { ShoppingBag, Star, Zap, Bike, Coffee, Ticket } from 'lucide-react';
+import { damageBus } from './Visuals/DamageFeedback';
+import { JuicyButton } from './ui/JuicyButton';
 
 interface MarketplaceProps {
   userState: UserState;
@@ -26,10 +27,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ userState, addPoints }
   const [mockBudget, setMockBudget] = useState<number>(userState.monthlyIncome);
 
   const handleConfirm = () => {
-    // In a real app, this would deduct money. Here we just close it.
-    addPoints(10); 
-    setSelectedItem(null);
-    alert(`You bought ${selectedItem?.name}! (Simulation only)`);
+    if (selectedItem) {
+      // Trigger Visual Damage Feedback
+      damageBus.emit(selectedItem.price);
+      addPoints(10); 
+      setSelectedItem(null);
+      // In a real app we'd deduct money here
+    }
   };
 
   return (
@@ -51,7 +55,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ userState, addPoints }
                 <ShoppingBag size={32} className="text-emerald-400" />
              </div>
              <div>
-                <h2 className="text-2xl font-bold">EconoMart</h2>
+                <h2 className="text-2xl font-bold font-pixel">EconoMart</h2>
                 <p className="text-emerald-200">Spend your hard-earned budget! (But be careful...)</p>
              </div>
              <div className="ml-auto bg-black/30 px-4 py-2 rounded-lg text-right">
@@ -75,12 +79,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ userState, addPoints }
                  <h3 className="font-bold text-slate-800 text-lg mb-1">{item.name}</h3>
                  <p className="text-slate-500 text-sm mb-6">{item.desc}</p>
 
-                 <button 
+                 <JuicyButton 
                     onClick={() => setSelectedItem(item)}
-                    className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2"
+                    variant="neutral"
+                    className="w-full"
                  >
                     <ShoppingBag size={18} /> Buy Now
-                 </button>
+                 </JuicyButton>
              </div>
          ))}
       </div>
