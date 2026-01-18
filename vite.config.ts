@@ -1,23 +1,15 @@
-import path from 'path';
+// This file is deprecated as the project has migrated to Next.js.
+// Keeping file to prevent build scripts from failing if they reference it, 
+// but commenting out logic to remove 'vite' dependency requirement.
+
+/*
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    return {
-      server: {
-        port: 3000,
-        host: '0.0.0.0',
-      },
-      plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
-      resolve: {
-        alias: {
-          '@': path.resolve(__dirname, '.'),
-        }
-      }
-    };
+  return {
+    plugins: [react()],
+  };
 });
+*/
+export default {};
