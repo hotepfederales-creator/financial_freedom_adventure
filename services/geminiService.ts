@@ -1,5 +1,4 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
 import { Transaction, BudgetAnalysis, TaxEstimate, FinMonState, EvolutionAnalysisResult } from "../types";
 import { saveMemory, getRelevantContext } from "./memoryService";
 import { getAllRules } from "./learningService";
