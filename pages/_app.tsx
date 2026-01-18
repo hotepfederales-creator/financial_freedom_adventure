@@ -1,22 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Head from 'next/head';
 import type { AppProps } from 'next/app';
-
 import posthog from 'posthog-js';
-import { useEffect } from 'react';
-
-export default function App({ Component, pageProps }) {
-  useEffect(() => {
-    // Initialize analytics
-    posthog.init('phc_n0v9W7iFV679MKsBCzLY7Cez6O4XR0xIrAYdlnO20BH', {
-      api_host: 'https://app.posthog.com',
-      // This automatically tracks "Rage Clicks" (when users click 3x fast in frustration)
-      autocapture: true, 
-    });
-  }, []);
-
-  return <Component {...pageProps} />;
-}
 
 // Global styles definitions matching original index.html
 const GlobalStyles = () => (
@@ -112,6 +97,21 @@ const GlobalStyles = () => (
 );
 
 export default function App({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    // Check if we are in the browser and not in development mode (optional)
+    if (typeof window !== 'undefined') {
+      posthog.init('phc_n0v9W7iFV679MKsBCzLY7Cez6O4XR0xIrAYdlnO20BH', {
+        api_host: 'https://app.posthog.com',
+        // This automatically tracks "Rage Clicks"
+        autocapture: true,
+        // Disable tracking in development to avoid polluting data
+        loaded: (posthog) => {
+          if (process.env.NODE_ENV === 'development') posthog.opt_out_capturing();
+        }
+      });
+    }
+  }, []);
+
   return (
     <>
       <Head>
