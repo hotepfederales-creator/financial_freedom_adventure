@@ -1,8 +1,8 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  distDir: 'dist',
-  // Ensure we can export if needed, though API routes require a server (Vercel)
+  distDir: 'dist', // Ensure build output goes to 'dist' for preview compatibility
   // images: { unoptimized: true }, 
 };
 
