@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints, ShoppingBag, Terminal, Book } from 'lucide-react';
 import { UserState, DailyStats } from './types';
@@ -18,6 +19,7 @@ import { useAppUpdate } from './hooks/useAppUpdate';
 import { ChangelogModal } from './components/Updates/ChangelogModal';
 import { TrainerHandbookModal } from './components/TrainerHandbookModal';
 import { DamageFeedback } from './components/Visuals/DamageFeedback';
+import { FeedbackWidget } from './components/FeedbackWidget';
 import { APP_VERSION } from './data/changelog';
 
 const getToday = () => new Date().toISOString().split('T')[0];
@@ -289,6 +291,7 @@ const App: React.FC = () => {
     <div className="flex min-h-screen bg-slate-900 font-sans selection:bg-indigo-500 selection:text-white text-slate-100">
       
       <DamageFeedback />
+      <FeedbackWidget />
       <OnboardingTour isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
       <ChangelogModal isOpen={showChangelog} onClose={dismissChangelog} />
       <TrainerHandbookModal isOpen={isHandbookOpen} onClose={() => setIsHandbookOpen(false)} />
