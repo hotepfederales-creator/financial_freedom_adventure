@@ -66,15 +66,21 @@ const App: React.FC = () => {
   const [userState, setUserState] = useState<UserState>(() => {
     // Only access localStorage on client mount (handled by effect in Next.js, but standard check for React)
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('finmon_state');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (!parsed.dailyStats) parsed.dailyStats = INITIAL_STATE.dailyStats;
-        if (!parsed.finMonChatHistory) parsed.finMonChatHistory = [];
-        // Migration for new story features
-        if (!parsed.ledgerChatHistory) parsed.ledgerChatHistory = INITIAL_STATE.ledgerChatHistory;
-        if (!parsed.storyFlags) parsed.storyFlags = INITIAL_STATE.storyFlags;
-        return parsed;
+      try {
+        const saved = localStorage.getItem('finmon_state');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (!parsed.dailyStats) parsed.dailyStats = INITIAL_STATE.dailyStats;
+          if (!parsed.finMonChatHistory) parsed.finMonChatHistory = [];
+          // Migration for new story features
+          if (!parsed.ledgerChatHistory) parsed.ledgerChatHistory = INITIAL_STATE.ledgerChatHistory;
+          if (!parsed.storyFlags) parsed.storyFlags = INITIAL_STATE.storyFlags;
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Failed to parse saved state", e);
+        // Fallback to initial state if corrupted
+        return INITIAL_STATE;
       }
     }
     return INITIAL_STATE;

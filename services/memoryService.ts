@@ -1,5 +1,6 @@
 
 import { Memory } from '../types/memoryTypes';
+import { generateUUID } from '../utils/helpers';
 
 const MEMORY_KEY = 'finmon_long_term_memory';
 
@@ -12,7 +13,7 @@ export const saveMemory = (category: Memory['category'], content: string) => {
   if (existing.some(m => m.content.toLowerCase() === content.toLowerCase())) return;
 
   const newMemory: Memory = {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     category,
     content,
     timestamp: Date.now()

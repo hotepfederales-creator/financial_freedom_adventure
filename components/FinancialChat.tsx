@@ -5,6 +5,7 @@ import { Card } from './ui/Card';
 import { Send, User, Lock, Wallet } from 'lucide-react';
 import { getChatResponse } from '../services/geminiService';
 import { ProfLedgerAvatar } from './ProfLedgerAvatar';
+import { generateUUID } from '../utils/helpers';
 
 interface FinancialChatProps {
   userState: UserState;
@@ -71,7 +72,7 @@ export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, onUpdat
     if (!input.trim() || loading) return;
 
     const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       role: 'user',
       text: input,
       timestamp: Date.now()
@@ -94,7 +95,7 @@ export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, onUpdat
     const responseText = await getChatResponse(history, userMsg.text, userState.level);
 
     const botMsg: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       role: 'model',
       text: responseText,
       timestamp: Date.now()

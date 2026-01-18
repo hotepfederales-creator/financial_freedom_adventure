@@ -1,5 +1,6 @@
 
 import { Transaction } from '../types';
+import { generateUUID } from '../utils/helpers';
 
 export interface LearningRule {
   id: string;
@@ -22,7 +23,7 @@ export const teachAgent = (transactionName: string, correctCategory: string, not
   }
 
   const newRule: LearningRule = {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     keyword: transactionName.toLowerCase(),
     correctCategory,
     userNote: note,

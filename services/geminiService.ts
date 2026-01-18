@@ -7,7 +7,7 @@ import { InterventionResult } from "../hooks/usePurchaseIntervention";
 // Base URL handling for Mobile vs Web
 // In Vercel (Web), this can be empty string '' to use relative paths.
 // In Capacitor (Mobile), this MUST be the full HTTPS URL of your deployed Vercel app.
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_BASE_URL) || '';
 
 // --- Helper to call the Next.js API Route ---
 async function callAgentApi(payload: any) {

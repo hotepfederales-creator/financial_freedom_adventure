@@ -4,9 +4,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { FinMonState } from '../../types';
 
 // Initialize on server-side only
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
-const MODEL_FLASH = 'gemini-3-flash-preview';
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const MODEL_FLASH = 'gemini-3-flash-preview'; // Fast model for chat
+const MODEL_PRO = 'gemini-3-pro-preview';     // Thinking model for complex analysis
 
 // --- Personas (Moved from Client) ---
 
@@ -106,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { type, data, history, message, userLevel, finMonState, memoryContext, learnedRules } = req.body;
 
   try {
-    // 1. Budget Analysis
+    // 1. Budget Analysis (Complex Task -> Thinking Mode)
     if (type === 'analyze_budget') {
       const { income, transactions } = data;
       // Optimize data to save tokens
@@ -126,9 +126,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `;
 
       const response = await ai.models.generateContent({
-        model: MODEL_FLASH,
+        model: MODEL_PRO, // Use Pro model for deeper analysis
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingBudget: 32768 }, // Enable Thinking
           systemInstruction: getProfessorPersona(5), // Default persona for analysis
           responseMimeType: "application/json",
           responseSchema: {
@@ -152,7 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(cleanJson(response.text));
     }
 
-    // 2. Tax Estimation
+    // 2. Tax Estimation (Complex Task -> Thinking Mode)
     if (type === 'estimate_tax') {
       const { income, location, filingStatus } = data;
       const prompt = `
@@ -165,9 +166,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `;
 
       const response = await ai.models.generateContent({
-        model: MODEL_FLASH,
+        model: MODEL_PRO, // Use Pro for complex tax reasoning
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingBudget: 32768 }, // Enable Thinking
           systemInstruction: getProfessorPersona(5),
           responseMimeType: "application/json",
           responseSchema: {
@@ -181,7 +183,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 type: Type.ARRAY,
                 items: { type: Type.STRING }
               }
-            }
+            },
+            required: ["estimatedTax", "effectiveRate", "takeHomePay", "bracket", "tips"]
           }
         }
       });
@@ -189,7 +192,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(cleanJson(response.text));
     }
 
-    // 3. Professor Ledger Chat
+    // 3. Professor Ledger Chat (Fast -> Flash)
     if (type === 'chat_professor') {
       // Inject memory and learned rules
       const contextMessage = memoryContext ? `\n\n${memoryContext}` : '';
@@ -197,7 +200,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const fullMessage = message + contextMessage + rulesMessage;
 
       const chat = ai.chats.create({
-        model: MODEL_FLASH,
+        model: MODEL_FLASH, // Keep Flash for chat latency
         history: history || [],
         config: {
           systemInstruction: getProfessorPersona(userLevel || 1)
@@ -208,7 +211,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ response: result.text });
     }
 
-    // 4. FinMon Chat
+    // 4. FinMon Chat (Fast -> Flash)
     if (type === 'chat_finmon') {
       const { financialContext } = req.body;
       const contextMessage = memoryContext ? `\n\n${memoryContext}` : '';
@@ -223,7 +226,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const chat = ai.chats.create({
-        model: MODEL_FLASH,
+        model: MODEL_FLASH, // Keep Flash for chat latency
         history: history || [],
         config: {
           systemInstruction: systemPrompt
@@ -234,7 +237,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ response: result.text });
     }
     
-    // 5. Evolution Engine Analysis
+    // 5. Evolution Engine Analysis (Reasoning -> Thinking Mode)
     if (type === 'analyze_evolution') {
       const { transactions, savingsRate } = data;
       
@@ -267,9 +270,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `;
 
       const response = await ai.models.generateContent({
-        model: MODEL_FLASH,
+        model: MODEL_PRO, // Use Pro for behavioral analysis
         contents: prompt,
         config: {
+          thinkingConfig: { thinkingBudget: 32768 }, // Enable Thinking
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -287,7 +291,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(cleanJson(response.text));
     }
 
-    // 6. Purchase Intervention Analysis
+    // 6. Purchase Intervention Analysis (Fast -> Flash)
     if (type === 'analyze_purchase') {
       const { itemName, price, monthlyBudget } = data;
       
@@ -299,7 +303,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `;
 
       const response = await ai.models.generateContent({
-        model: MODEL_FLASH,
+        model: MODEL_FLASH, // Use Flash for real-time intervention speed
         contents: prompt,
         config: {
           responseMimeType: "application/json",

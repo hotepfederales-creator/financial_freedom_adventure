@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { UserState, Transaction, BudgetAnalysis, DailyStats } from '../types';
 import { Card } from './ui/Card';
@@ -7,6 +8,7 @@ import { predictCategory } from '../services/learningService';
 import { CorrectionModal } from './CorrectionModal';
 import { JuicyButton } from './ui/JuicyButton';
 import { damageBus } from './Visuals/DamageFeedback';
+import { generateUUID } from '../utils/helpers';
 
 interface BudgetPlannerProps {
   userState: UserState;
@@ -44,7 +46,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
     const amount = parseFloat(newExpenseAmount);
 
     const newTransaction: Transaction = {
-      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+      id: generateUUID(),
       description: newExpenseDesc || newExpenseCategory,
       category: newExpenseCategory,
       amount: amount,
