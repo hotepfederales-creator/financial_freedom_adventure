@@ -1,5 +1,7 @@
 {
   "name": "FinMon Trainer",
   "description": "A Pokémon-inspired financial assistant where you raise a 'FinMon' creature by managing your budget, completing tax quests, and learning from Professor Ledger.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }
