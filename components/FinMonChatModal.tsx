@@ -4,7 +4,6 @@ import { UserState, ChatMessage } from '../types';
 import { X, Send, Ghost } from 'lucide-react';
 import { FinMon } from './FinMon';
 import { getFinMonResponse } from '../services/geminiService';
-import { generateUUID } from '../utils/helpers';
 
 interface FinMonChatModalProps {
   isOpen: boolean;
@@ -50,7 +49,7 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
     if (!input.trim() || isTyping) return;
 
     const userMsg: ChatMessage = {
-      id: generateUUID(),
+      id: crypto.randomUUID(),
       role: 'user',
       text: input,
       timestamp: Date.now()
@@ -90,7 +89,7 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
     const response = await getFinMonResponse(apiHistory, input, userState.finMon, financialContext);
 
     const botMsg: ChatMessage = {
-      id: generateUUID(),
+      id: crypto.randomUUID(),
       role: 'model',
       text: response,
       timestamp: Date.now()
