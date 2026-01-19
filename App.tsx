@@ -19,6 +19,7 @@ import { ChangelogModal } from './components/Updates/ChangelogModal';
 import { TrainerHandbookModal } from './components/TrainerHandbookModal';
 import { DamageFeedback } from './components/Visuals/DamageFeedback';
 import { APP_VERSION } from './data/changelog';
+import posthog from 'posthog-js';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -111,6 +112,13 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('finmon_state', JSON.stringify(userState));
   }, [userState]);
+
+  // Analytics: Track View Changes
+  useEffect(() => {
+    posthog.capture('$pageview', {
+      '$current_url': `${window.location.origin}/${currentView}`
+    });
+  }, [currentView]);
 
   // Check for first time visit
   useEffect(() => {
