@@ -14,9 +14,10 @@ interface BudgetPlannerProps {
   addPoints: (amount: number) => void;
   incrementDailyStat: (key: keyof Omit<DailyStats, 'date' | 'claimedQuests'>) => void;
   onNavigate: (view: 'dashboard' | 'budget' | 'tax' | 'chat' | 'gamification' | 'raids') => void;
+  onTutorialAction?: (action: string) => void;
 }
 
-export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdateUser, addPoints, incrementDailyStat, onNavigate }) => {
+export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdateUser, addPoints, incrementDailyStat, onNavigate, onTutorialAction }) => {
   const [newExpenseDesc, setNewExpenseDesc] = useState('');
   const [newExpenseCategory, setNewExpenseCategory] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
@@ -64,6 +65,8 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
     setNewExpenseAmount('');
     addPoints(10); // Reward for logging expense
     incrementDailyStat('expensesLogged');
+
+    if (onTutorialAction) onTutorialAction('ADD_EXPENSE');
   };
 
   const handleRemoveTransaction = (id: string) => {
@@ -82,7 +85,12 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
   };
 
   const handleIncomeChange = (val: string) => {
-     onUpdateUser({ monthlyIncome: parseFloat(val) || 0 });
+     const income = parseFloat(val) || 0;
+     onUpdateUser({ monthlyIncome: income });
+     if (income > 0 && onTutorialAction) {
+         // Trigger tutorial completion for this step
+         onTutorialAction('SET_INCOME');
+     }
   };
 
   // Special handler to move to chat
@@ -134,6 +142,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                     <div className="relative group flex-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">$</span>
                         <input
+                        id="budget-input"
                         type="number"
                         value={userState.monthlyIncome || ''}
                         onChange={(e) => handleIncomeChange(e.target.value)}
@@ -208,6 +217,7 @@ export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ userState, onUpdat
                     />
                   </div>
                   <JuicyButton
+                    id="add-transaction-btn"
                     type="submit"
                     variant="danger"
                     size="md"

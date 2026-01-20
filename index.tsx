@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import posthog from 'posthog-js';
+import { UserProvider } from './context/UserContext';
 
 // Initialize PostHog
 posthog.init('phx_bJoihj9PmDiCTitlPaSacSG4dTXEmVl7U0O2WbfyTUobsW', {
@@ -17,6 +18,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <UserProvider>
+      <App />
+    </UserProvider>
   </React.StrictMode>
 );

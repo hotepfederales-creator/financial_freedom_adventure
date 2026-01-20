@@ -1,9 +1,9 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { UserState, ChatMessage } from '../types';
 import { X, Send, Ghost } from 'lucide-react';
 import { FinMon } from './FinMon';
 import { getFinMonResponse } from '../services/geminiService';
+import posthog from 'posthog-js';
 
 interface FinMonChatModalProps {
   isOpen: boolean;
@@ -47,6 +47,13 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
+
+    // Track Event
+    posthog.capture('FinMon Chat', {
+        finmon_name: userState.finMon.name,
+        finmon_stage: userState.finMon.stage,
+        finmon_mood: userState.finMon.mood
+    });
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),

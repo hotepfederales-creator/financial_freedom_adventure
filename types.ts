@@ -29,6 +29,8 @@ export interface StoryFlags {
   expenseLoggedSeen: boolean;
 }
 
+export type Difficulty = 'NOVICE' | 'VETERAN' | 'HARDCORE';
+
 export interface UserState {
   points: number;
   level: number;
@@ -41,6 +43,7 @@ export interface UserState {
   finMonChatHistory: ChatMessage[]; // Chat history with the pet
   ledgerChatHistory: ChatMessage[]; // Chat history with Professor Ledger
   storyFlags: StoryFlags;
+  difficulty: Difficulty;
 }
 
 export interface Achievement {

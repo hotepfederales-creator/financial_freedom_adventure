@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { teachAgent } from '../../services/learningService';
 import { BrainCircuit, Check, X } from 'lucide-react';
+import posthog from 'posthog-js';
 
 const MOCK_AMBIGUOUS_DATA = [
   { id: 1, name: 'AMZN MKTP US', probable: 'Shopping' },
@@ -22,6 +23,15 @@ export const AITrainingDojo: React.FC = () => {
     } else {
         setStreak(0);
     }
+    
+    // Track if session is complete (this was the last item)
+    if (queue.length === 1) {
+        posthog.capture('AI Training Session Completed', {
+            final_ai_level: aiLevel + 1,
+            final_streak: isCorrect ? streak + 1 : 0
+        });
+    }
+
     // If wrong, we would open a correction modal (simplified here)
     
     setQueue(prev => prev.slice(1));

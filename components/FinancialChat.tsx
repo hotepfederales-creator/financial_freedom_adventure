@@ -1,10 +1,10 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { UserState, ChatMessage, DailyStats } from '../types';
 import { Card } from './ui/Card';
 import { Send, User, Lock, Wallet } from 'lucide-react';
 import { getChatResponse } from '../services/geminiService';
 import { ProfLedgerAvatar } from './ProfLedgerAvatar';
+import posthog from 'posthog-js';
 
 interface FinancialChatProps {
   userState: UserState;
@@ -69,6 +69,12 @@ export const FinancialChat: React.FC<FinancialChatProps> = ({ userState, onUpdat
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
+
+    // Track Event
+    posthog.capture('Professor Ledger Chat', {
+        user_level: userState.level,
+        message_length: input.length
+    });
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),

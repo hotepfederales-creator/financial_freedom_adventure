@@ -9,9 +9,10 @@ interface DashboardProps {
   userState: UserState;
   onUpdateUser: (newState: Partial<UserState>) => void;
   onNavigate: (view: 'dashboard' | 'budget' | 'tax' | 'chat' | 'gamification' | 'raids') => void;
+  onTutorialAction?: (action: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ userState, onUpdateUser, onNavigate }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ userState, onUpdateUser, onNavigate, onTutorialAction }) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const totalIncome = userState.monthlyIncome;
@@ -27,6 +28,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ userState, onUpdateUser, o
 
   // Recent Battle Log
   const recentTransactions = userState.transactions.slice(-5).reverse();
+
+  const handleFinMonClick = () => {
+    setIsChatOpen(true);
+    if (onTutorialAction) onTutorialAction('CLICK_EGG');
+  };
 
   return (
     <div className="min-h-full pb-8">
@@ -74,7 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userState, onUpdateUser, o
           {/* Platform */}
           <div className="absolute bottom-16 w-64 h-12 bg-black/40 blur-xl rounded-[100%]"></div>
 
-          <div className="relative z-10 transform transition-transform duration-500 hover:scale-105 cursor-pointer" onClick={() => setIsChatOpen(true)}>
+          <div id="finmon-display" className="relative z-10 transform transition-transform duration-500 hover:scale-105 cursor-pointer" onClick={handleFinMonClick}>
             <div className="w-64 h-64 md:w-80 md:h-80">
                  <FinMon stage={userState.finMon.stage} mood={mood} species={userState.finMon.species as any} />
             </div>
