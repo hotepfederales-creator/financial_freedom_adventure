@@ -1,3 +1,4 @@
+// @ts-nocheck
 
 describe('FinMon Advanced Features E2E', () => {
   beforeEach(() => {
