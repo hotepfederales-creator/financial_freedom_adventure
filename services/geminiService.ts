@@ -5,8 +5,7 @@ import { saveMemory, getRelevantContext } from "./memoryService";
 import { getAllRules } from "./learningService";
 import { InterventionResult } from "../hooks/usePurchaseIntervention";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const MODEL_FLASH = 'gemini-3-flash-preview';
 
 // --- Personas & Prompts ---
