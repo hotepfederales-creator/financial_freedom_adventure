@@ -7,9 +7,14 @@ import { InterventionResult } from "../hooks/usePurchaseIntervention";
 
 // Lazy initialization to prevent crashes if API_KEY is missing at module load time
 let aiInstance: GoogleGenAI | null = null;
+
 const getAI = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API_KEY_MISSING");
+  }
   if (!aiInstance) {
-    aiInstance = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    aiInstance = new GoogleGenAI({ apiKey });
   }
   return aiInstance;
 };
@@ -161,11 +166,19 @@ export const getBudgetAnalysis = async (
     });
 
     return cleanJson(response.text) as BudgetAnalysis;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Budget Analysis Error:", error);
+    if (error.message === 'API_KEY_MISSING') {
+        return {
+          healthScore: 0,
+          summary: "MISSING CONFIGURATION: Please set your API_KEY in the environment variables.",
+          recommendations: ["Set API_KEY in .env or Vercel settings.", "Reload the app."],
+          savingsPotential: 0
+        };
+    }
     return {
       healthScore: 0,
-      summary: "My scanner is malfunctioning! Check your API key or internet connection.",
+      summary: "My scanner is malfunctioning! Check your internet connection.",
       recommendations: ["Try analyzing fewer transactions."],
       savingsPotential: 0
     };
@@ -210,8 +223,17 @@ export const getTaxEstimate = async (
     });
 
     return cleanJson(response.text) as TaxEstimate;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Tax Estimate Error:", error);
+    if (error.message === 'API_KEY_MISSING') {
+        return {
+            estimatedTax: 0,
+            effectiveRate: 0,
+            takeHomePay: 0,
+            bracket: "Error",
+            tips: ["Please configure API_KEY to use this feature."]
+        };
+    }
     throw error;
   }
 };
@@ -239,8 +261,11 @@ export const getChatResponse = async (
 
     const result = await chat.sendMessage({ message: fullMessage });
     return extractAndSaveMemories(result.text || "I'm studying my ledger...");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Chat Error:", error);
+    if (error.message === 'API_KEY_MISSING') {
+        return "SYSTEM ERROR: API_KEY is missing. Please check your environment configuration.";
+    }
     return "A wild error appeared! Please try again.";
   }
 };
@@ -273,8 +298,11 @@ export const getFinMonResponse = async (
 
     const result = await chat.sendMessage({ message: fullMessage });
     return extractAndSaveMemories(result.text || "...");
-  } catch (error) {
+  } catch (error: any) {
     console.error("FinMon Chat Error:", error);
+    if (error.message === 'API_KEY_MISSING') {
+        return "...(I need an API KEY to speak)...";
+    }
     return "Zzz...";
   }
 };
@@ -310,8 +338,15 @@ export const analyzePurchaseRisk = async (
     });
 
     return cleanJson(response.text) as InterventionResult;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Purchase Analysis Error:", error);
+    if (error.message === 'API_KEY_MISSING') {
+         return {
+            riskLevel: 'CAUTION',
+            message: "API Key missing. Cannot analyze risk accurately.",
+            opportunityCost: "Unknown"
+         };
+    }
     throw error;
   }
 };
@@ -356,8 +391,16 @@ export const getEvolutionAnalysis = async (
       }
     });
     return cleanJson(response.text) as EvolutionAnalysisResult;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Evolution Analysis Error:", error);
+    if (error.message === 'API_KEY_MISSING') {
+         return {
+            suggestedForm: 'EGG',
+            confidence: 0,
+            reasoning: "API Key missing. Cannot calculate evolution.",
+            evolutionTriggered: false
+         };
+    }
     throw error;
   }
 };

@@ -1,4 +1,5 @@
 
+
 export interface Transaction {
   id: string;
   description?: string; // e.g., "Starbucks", "Uber"
@@ -31,6 +32,12 @@ export interface StoryFlags {
 
 export type Difficulty = 'NOVICE' | 'VETERAN' | 'HARDCORE';
 
+export interface UserSettings {
+  fontMode: 'IMMERSIVE' | 'READABLE';
+  contrastMode: 'STANDARD' | 'HIGH_CONTRAST';
+  fontSize: 'NORMAL' | 'LARGE';
+}
+
 export interface UserState {
   points: number;
   level: number;
@@ -44,6 +51,7 @@ export interface UserState {
   ledgerChatHistory: ChatMessage[]; // Chat history with Professor Ledger
   storyFlags: StoryFlags;
   difficulty: Difficulty;
+  settings: UserSettings;
 }
 
 export interface Achievement {

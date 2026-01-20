@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints, ShoppingBag, Terminal, Book, Map, BrainCircuit, Settings } from 'lucide-react';
-import { UserState, DailyStats, Difficulty } from './types';
+import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints, ShoppingBag, Terminal, Book, Map, BrainCircuit, Settings, Eye } from 'lucide-react';
+import { UserState, DailyStats, Difficulty, UserSettings } from './types';
 import { Dashboard } from './components/Dashboard';
 import { BudgetPlanner } from './components/BudgetPlanner';
 import { TaxEstimator } from './components/TaxEstimator';
@@ -13,6 +14,7 @@ import { Marketplace } from './components/Marketplace';
 import { StoryMap } from './components/Campaign/StoryMap';
 import { AITrainingDojo } from './components/AI/AITrainingDojo';
 import { DifficultySelector } from './components/Settings/DifficultySelector';
+import { AccessibilitySettings } from './components/Settings/AccessibilitySettings';
 import { FeedbackWidget } from './components/FeedbackWidget';
 import { useWildNudge } from './hooks/useWildNudge';
 import { useEvolutionLogic } from './hooks/useEvolutionLogic';
@@ -65,7 +67,12 @@ const INITIAL_STATE: UserState = {
     incomeSetSeen: false,
     expenseLoggedSeen: false
   },
-  difficulty: 'NOVICE'
+  difficulty: 'NOVICE',
+  settings: {
+    fontMode: 'IMMERSIVE',
+    contrastMode: 'STANDARD',
+    fontSize: 'NORMAL'
+  }
 };
 
 type View = 'dashboard' | 'budget' | 'tax' | 'chat' | 'gamification' | 'raids' | 'market' | 'campaign' | 'dojo' | 'settings';
@@ -90,6 +97,7 @@ const App: React.FC<AppProps> = ({ onTutorialAction }) => {
         if (!parsed.ledgerChatHistory) parsed.ledgerChatHistory = INITIAL_STATE.ledgerChatHistory;
         if (!parsed.storyFlags) parsed.storyFlags = INITIAL_STATE.storyFlags;
         if (!parsed.difficulty) parsed.difficulty = 'NOVICE';
+        if (!parsed.settings) parsed.settings = INITIAL_STATE.settings;
         return parsed;
       }
     }
@@ -125,6 +133,8 @@ const App: React.FC<AppProps> = ({ onTutorialAction }) => {
     deadline: '7 Days',
     difficulty: 'Hard'
   });
+  
+  const hasApiKey = process.env.API_KEY && process.env.API_KEY.length > 5;
 
   useEffect(() => {
     localStorage.setItem('finmon_state', JSON.stringify(userState));
@@ -216,6 +226,13 @@ const App: React.FC<AppProps> = ({ onTutorialAction }) => {
 
   const updateUser = (newState: Partial<UserState>) => {
     setUserState(prev => ({ ...prev, ...newState }));
+  };
+  
+  const updateSettings = (newSettings: Partial<UserSettings>) => {
+    setUserState(prev => ({
+        ...prev,
+        settings: { ...prev.settings, ...newSettings }
+    }));
   };
 
   const addPoints = (amount: number) => {
@@ -326,7 +343,13 @@ const App: React.FC<AppProps> = ({ onTutorialAction }) => {
       case 'market': return <Marketplace userState={userState} addPoints={addPoints} />;
       case 'campaign': return <StoryMap currentNetWorth={currentBalance} />;
       case 'dojo': return <AITrainingDojo />;
-      case 'settings': return <DifficultySelector currentDifficulty={userState.difficulty} onSelect={(diff) => updateUser({ difficulty: diff })} />;
+      case 'settings': 
+        return (
+          <div className="space-y-6">
+             <DifficultySelector currentDifficulty={userState.difficulty} onSelect={(diff) => updateUser({ difficulty: diff })} />
+             <AccessibilitySettings settings={userState.settings} onUpdate={updateSettings} />
+          </div>
+        );
       default: return <Dashboard userState={userState} onUpdateUser={updateUser} onNavigate={setCurrentView} onTutorialAction={onTutorialAction} />;
     }
   };
@@ -335,10 +358,24 @@ const App: React.FC<AppProps> = ({ onTutorialAction }) => {
   if (isUserLoading) return <div className="h-screen bg-slate-900 flex items-center justify-center text-white">Loading FinMon...</div>;
   if (!profile) return <SetupWizard />;
 
+  // Calculate dynamic classes for theme
+  const themeClasses = [
+    userState.settings.fontMode === 'READABLE' ? 'mode-readable' : '',
+    userState.settings.contrastMode === 'HIGH_CONTRAST' ? 'mode-high-contrast' : '',
+    userState.settings.fontSize === 'LARGE' ? 'mode-text-large' : ''
+  ].join(' ');
+
   // Wrapped App Content with Tutorial Level
   return (
     <TutorialLevel>
-        <div className="flex min-h-screen bg-slate-900 font-sans selection:bg-indigo-500 selection:text-white text-slate-100">
+        <div className={`flex min-h-screen bg-slate-900 font-sans selection:bg-indigo-500 selection:text-white text-slate-100 ${themeClasses}`}>
+        
+        {!hasApiKey && (
+            <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-center p-2 z-[99999] font-bold text-sm shadow-md flex items-center justify-center gap-2">
+                <AlertTriangle size={16} />
+                CONFIGURATION ERROR: API_KEY environment variable is missing. AI features will not work.
+            </div>
+        )}
         
         <DamageFeedback />
         <FeedbackWidget />

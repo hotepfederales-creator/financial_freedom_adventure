@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -15,21 +16,63 @@
         --accent-xp: #3b82f6; /* Neon Blue */
         --accent-gold: #fbbf24; /* Coin Gold */
         --text-main: #f8fafc;
-        --font-pixel: 'VT323', monospace;
-        --font-data: 'Chakra Petch', sans-serif;
+        
+        /* Default Fonts */
+        --font-body: 'Chakra Petch', sans-serif;
+        --font-header: 'VT323', monospace;
       }
 
       body {
-        font-family: 'Chakra Petch', sans-serif;
+        font-family: var(--font-body);
         background-color: #f8fafc; /* Fallback */
         background-color: var(--bg-core); /* Theme override */
       }
 
       h1, h2, h3, h4, .font-pixel {
-        font-family: 'VT323', monospace;
+        font-family: var(--font-header);
         letter-spacing: 1px;
         text-transform: uppercase;
       }
+
+      .font-data {
+        font-family: var(--font-body);
+      }
+      
+      /* --- ACCESSIBILITY OVERRIDES --- */
+
+      /* Readable Mode: Swaps cool fonts for standard Inter */
+      .mode-readable {
+        --font-body: 'Inter', sans-serif !important;
+        --font-header: 'Inter', sans-serif !important;
+      }
+      .mode-readable h1, .mode-readable h2, .mode-readable h3, .mode-readable .font-pixel {
+        text-transform: none;
+        letter-spacing: normal;
+        font-weight: 800;
+      }
+
+      /* High Contrast Mode: Brightens text, darkens backgrounds */
+      .mode-high-contrast {
+        --bg-core: #000000;
+        --text-main: #ffffff;
+      }
+      .mode-high-contrast .text-slate-500, 
+      .mode-high-contrast .text-slate-400 {
+        color: #e2e8f0 !important; /* Make gray text much lighter */
+      }
+      .mode-high-contrast .bg-slate-800, 
+      .mode-high-contrast .bg-slate-900 {
+        background-color: #000000 !important;
+        border-color: #ffffff !important;
+      }
+      
+      /* Large Text Mode */
+      .mode-text-large {
+        font-size: 110%;
+      }
+      .mode-text-large .text-xs { font-size: 0.85rem; }
+      .mode-text-large .text-sm { font-size: 1rem; }
+      .mode-text-large .text-base { font-size: 1.15rem; }
       
       /* Smooth Scrolling */
       html {
