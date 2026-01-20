@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints, ShoppingBag, Terminal, Book } from 'lucide-react';
+import { LayoutDashboard, Wallet, Calculator, MessageSquare, Award, Menu, X, Ghost, LogOut, Swords, AlertTriangle, Footprints, ShoppingBag, Terminal, Book, Map, BrainCircuit, Settings } from 'lucide-react';
 import { UserState, DailyStats } from './types';
 import { Dashboard } from './components/Dashboard';
 import { BudgetPlanner } from './components/BudgetPlanner';
@@ -10,6 +10,10 @@ import { EvolutionScene } from './components/EvolutionScene';
 import { OnboardingTour } from './components/OnboardingTour';
 import { SocialRaids } from './components/SocialRaids';
 import { Marketplace } from './components/Marketplace';
+import { StoryMap } from './components/Campaign/StoryMap';
+import { AITrainingDojo } from './components/AI/AITrainingDojo';
+import { DifficultySelector } from './components/Settings/DifficultySelector';
+import { FeedbackWidget } from './components/FeedbackWidget';
 import { useWildNudge } from './hooks/useWildNudge';
 import { useEvolutionLogic } from './hooks/useEvolutionLogic';
 import { DevControlPanel } from './components/DevTools/DevControlPanel';
@@ -59,7 +63,7 @@ const INITIAL_STATE: UserState = {
   }
 };
 
-type View = 'dashboard' | 'budget' | 'tax' | 'chat' | 'gamification' | 'raids' | 'market';
+type View = 'dashboard' | 'budget' | 'tax' | 'chat' | 'gamification' | 'raids' | 'market' | 'campaign' | 'dojo' | 'settings';
 
 const App: React.FC = () => {
   const [userState, setUserState] = useState<UserState>(() => {
@@ -281,6 +285,11 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    // Basic calculation for Campaign Progression
+    const currentBalance = userState.monthlyIncome > 0 
+        ? userState.monthlyIncome - userState.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+        : 0;
+
     switch (currentView) {
       case 'dashboard': return <Dashboard userState={userState} onUpdateUser={updateUser} onNavigate={setCurrentView} />;
       case 'budget': return <BudgetPlanner userState={userState} onUpdateUser={updateUser} addPoints={addPoints} incrementDailyStat={incrementDailyStat} onNavigate={setCurrentView} />;
@@ -289,6 +298,9 @@ const App: React.FC = () => {
       case 'gamification': return <GamificationHub userState={userState} onUpdateUser={updateUser} addPoints={addPoints} />;
       case 'raids': return <SocialRaids externalRaidData={raidBoss} />;
       case 'market': return <Marketplace userState={userState} addPoints={addPoints} />;
+      case 'campaign': return <StoryMap currentNetWorth={currentBalance} />;
+      case 'dojo': return <AITrainingDojo />;
+      case 'settings': return <DifficultySelector />;
       default: return <Dashboard userState={userState} onUpdateUser={updateUser} onNavigate={setCurrentView} />;
     }
   };
@@ -297,6 +309,7 @@ const App: React.FC = () => {
     <div className="flex min-h-screen bg-slate-900 font-sans selection:bg-indigo-500 selection:text-white text-slate-100">
       
       <DamageFeedback />
+      <FeedbackWidget />
       <OnboardingTour isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
       <ChangelogModal isOpen={showChangelog} onClose={dismissChangelog} />
       <TrainerHandbookModal isOpen={isHandbookOpen} onClose={() => setIsHandbookOpen(false)} />
@@ -378,13 +391,19 @@ const App: React.FC = () => {
             <div className="px-4 pb-2 text-xs font-bold text-slate-600 uppercase tracking-wider font-pixel">Main Menu</div>
             <SidebarLink view="dashboard" icon={LayoutDashboard} label="Cockpit" />
             <SidebarLink view="budget" icon={Wallet} label="Item Bag" />
-            <SidebarLink view="tax" icon={Calculator} label="Tax Gym" />
+            <SidebarLink view="campaign" icon={Map} label="Story Map" />
             <SidebarLink view="market" icon={ShoppingBag} label="EconoMart" />
+            
             <div className="my-4 border-t border-slate-800"></div>
             <div className="px-4 pb-2 text-xs font-bold text-slate-600 uppercase tracking-wider font-pixel">Social & Rank</div>
             <SidebarLink view="chat" icon={MessageSquare} label="Prof. Ledger" />
             <SidebarLink view="raids" icon={Swords} label="Raid Battles" />
+            <SidebarLink view="dojo" icon={BrainCircuit} label="AI Dojo" />
             <SidebarLink view="gamification" icon={Award} label="Trainer Card" />
+
+            <div className="my-4 border-t border-slate-800"></div>
+            <SidebarLink view="settings" icon={Settings} label="System Settings" />
+            <SidebarLink view="tax" icon={Calculator} label="Tax Gym" />
             
             {/* Handbook Button */}
             <button
@@ -438,6 +457,9 @@ const App: React.FC = () => {
                 {currentView === 'raids' && 'RAID SECTOR'}
                 {currentView === 'market' && 'ECONO-MART'}
                 {currentView === 'gamification' && 'TRAINER ID'}
+                {currentView === 'campaign' && 'WORLD MAP'}
+                {currentView === 'dojo' && 'AI TRAINING'}
+                {currentView === 'settings' && 'SYSTEM CONFIG'}
               </h2>
               <p className="text-slate-500 text-sm mt-1 font-mono">
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase()}
