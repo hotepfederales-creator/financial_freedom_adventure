@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       // Expose API Key safely to the client (ensure you treat this key as public if used on client)
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
       // Polyfill process.env to avoid ReferenceError in some libraries
       'process.env': {}
     }

@@ -5,7 +5,15 @@ import { saveMemory, getRelevantContext } from "./memoryService";
 import { getAllRules } from "./learningService";
 import { InterventionResult } from "../hooks/usePurchaseIntervention";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization to prevent crashes if API_KEY is missing at module load time
+let aiInstance: GoogleGenAI | null = null;
+const getAI = () => {
+  if (!aiInstance) {
+    aiInstance = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  }
+  return aiInstance;
+};
+
 const MODEL_FLASH = 'gemini-3-flash-preview';
 
 // --- Personas & Prompts ---
@@ -130,7 +138,7 @@ export const getBudgetAnalysis = async (
       Provide a health score (0-100), a brief summary in the voice of Professor Ledger, 3 actionable training tips (recommendations), and potential monthly savings (HP recovery).
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: MODEL_FLASH,
       contents: prompt,
       config: {
@@ -179,7 +187,7 @@ export const getTaxEstimate = async (
       Provide stats: estimated total tax, effective rate, take home pay, bracket, and 2 tips.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: MODEL_FLASH,
       contents: prompt,
       config: {
@@ -221,7 +229,7 @@ export const getChatResponse = async (
     const rulesMessage = rules && rules.length > 0 ? `\n\n[LEARNED RULES]: ${JSON.stringify(rules)}` : '';
     const fullMessage = message + contextMessage + rulesMessage;
 
-    const chat = ai.chats.create({
+    const chat = getAI().chats.create({
       model: MODEL_FLASH,
       history: history || [],
       config: {
@@ -255,7 +263,7 @@ export const getFinMonResponse = async (
       systemPrompt += `\n\n[CURRENT FINANCIAL STATUS]\nMonthly Income: $${financialContext.income}\nTotal Expenses: $${financialContext.totalExpenses}\nSavings Rate: ${financialContext.savingsRate}%\nTop Expense Category: ${financialContext.topExpense}\n\n[INSTRUCTION]\nUse the financial status above to give specific, character-appropriate tips if the user asks for advice or how they are doing.`;
     }
 
-    const chat = ai.chats.create({
+    const chat = getAI().chats.create({
       model: MODEL_FLASH,
       history: history || [],
       config: {
@@ -284,7 +292,7 @@ export const analyzePurchaseRisk = async (
       OUTPUT: JSON with fields: riskLevel (SAFE/CAUTION/DANGER), message (short RPG warning/approval), opportunityCost (relatable comparison, e.g. "That's 20 coffees!").
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: MODEL_FLASH,
       contents: prompt,
       config: {
@@ -330,7 +338,7 @@ export const getEvolutionAnalysis = async (
       Determine the form.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: MODEL_FLASH,
       contents: prompt,
       config: {
