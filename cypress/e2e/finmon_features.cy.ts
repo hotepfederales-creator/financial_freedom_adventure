@@ -1,9 +1,3 @@
-// Declarations for Cypress globals to satisfy TypeScript compiler
-declare const describe: any;
-declare const beforeEach: any;
-declare const it: any;
-declare const cy: any;
-declare const expect: any;
 
 describe('FinMon Advanced Features E2E', () => {
   beforeEach(() => {
