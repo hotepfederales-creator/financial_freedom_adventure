@@ -1,7 +1,18 @@
 
-export const APP_VERSION = '1.2.0'; // Increment this to trigger the modal
+export const APP_VERSION = '1.3.0'; // Increment this to trigger the modal
 
 export const CHANGELOG_HISTORY = [
+  {
+    version: '1.3.0',
+    title: 'The Accessibility Update 👁️',
+    date: '2026-02-20',
+    changes: [
+      'NEW: Added "System Config" menu for visual customization.',
+      'NEW: Added "Readable Mode" (Standard Fonts) and High Contrast options.',
+      'IMPROVED: Added robust error handling for API Key configuration.',
+      'IMPROVED: Text size scaling options for better readability.'
+    ]
+  },
   {
     version: '1.2.0',
     title: 'The Smart Checkout Update 🛒',
