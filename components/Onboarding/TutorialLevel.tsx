@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { useUser } from '../../context/UserContext';
 import { ProfLedgerAvatar } from '../ProfLedgerAvatar';
+import posthog from 'posthog-js';
 
 const TUTORIAL_STEPS = [
   {
@@ -32,10 +34,18 @@ export const TutorialLevel: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const currentStep = TUTORIAL_STEPS[currentStepIndex];
 
-  const advanceStep = () => {
+  const advanceStep = (method: 'action' | 'skip') => {
+    // Analytics: Track Interactive Step
+    posthog.capture('Interactive Tutorial Step Completed', {
+      step_id: currentStep.id,
+      method: method
+    });
+
     if (currentStepIndex < TUTORIAL_STEPS.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     } else {
+      // Analytics: Track Completion
+      posthog.capture('Interactive Tutorial Completed');
       completeTutorial();
     }
   };
@@ -43,7 +53,7 @@ export const TutorialLevel: React.FC<{ children: React.ReactNode }> = ({ childre
   // This function is passed down to children so they can trigger the next step
   const handleAction = (action: string) => {
     if (action === currentStep.actionRequired) {
-      advanceStep();
+      advanceStep('action');
     }
   };
 
@@ -74,7 +84,7 @@ export const TutorialLevel: React.FC<{ children: React.ReactNode }> = ({ childre
         </div>
         <div className="flex flex-col gap-2">
             <button 
-                onClick={advanceStep} 
+                onClick={() => advanceStep('skip')} 
                 className="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded font-bold text-xs uppercase shadow-md"
             >
                 Skip Step

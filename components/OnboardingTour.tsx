@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ChevronRight, LayoutDashboard, Wallet, MessageSquare, Award, Ghost, X, Heart, TrendingUp, Minus, Plus, ArrowUpCircle } from 'lucide-react';
 import { FinMon } from './FinMon';
+import posthog from 'posthog-js';
 
 interface OnboardingTourProps {
   isOpen: boolean;
@@ -71,9 +72,20 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onComple
   if (!isOpen) return null;
 
   const handleNext = () => {
+    // Analytics: Track Step Completion
+    posthog.capture('Tutorial Step Completed', {
+      step_index: currentStep,
+      step_id: STEPS[currentStep].id,
+      step_title: STEPS[currentStep].title
+    });
+
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
+      // Analytics: Track Full Completion
+      posthog.capture('Tutorial Completed', {
+        total_steps: STEPS.length
+      });
       onComplete();
     }
   };
@@ -82,6 +94,15 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onComple
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
     }
+  };
+
+  const handleSkip = () => {
+    // Analytics: Track Skip/Drop-off
+    posthog.capture('Tutorial Skipped', {
+      step_index: currentStep,
+      step_id: STEPS[currentStep].id
+    });
+    onComplete();
   };
 
   const currentStepData = STEPS[currentStep];
@@ -181,7 +202,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ isOpen, onComple
         </div>
 
         <button 
-          onClick={onComplete}
+          onClick={handleSkip}
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors z-10"
         >
           <X size={20} />
