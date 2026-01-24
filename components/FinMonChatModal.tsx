@@ -1,4 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { UserState, ChatMessage } from '../types';
 import { X, Send, Ghost } from 'lucide-react';
 import { FinMon } from './FinMon';
@@ -123,8 +125,9 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
     4: 'bg-indigo-600'
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+  // Render via Portal to avoid z-index/transform clipping issues in the dashboard
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className={`bg-white w-full max-w-md rounded-3xl shadow-2xl border-4 overflow-hidden flex flex-col h-[600px] ${themeColors[userState.finMon.stage]}`}>
         
         {/* Header */}
@@ -134,8 +137,8 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
                <FinMon stage={userState.finMon.stage} mood={userState.finMon.mood} species={userState.finMon.species as any} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800">{userState.finMon.name}</h3>
-              <p className="text-xs text-slate-500 capitalize">{userState.finMon.mood}</p>
+              <h3 className="font-bold text-slate-800 font-sans">{userState.finMon.name}</h3>
+              <p className="text-xs text-slate-500 capitalize font-sans">{userState.finMon.mood}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
@@ -152,7 +155,8 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
                    <Ghost size={14} className="text-slate-400" />
                  </div>
                )}
-               <div className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm shadow-sm ${
+               {/* Applied font-sans and tracking-normal for better readability */}
+               <div className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm shadow-sm font-sans tracking-normal leading-relaxed ${
                  msg.role === 'user' 
                    ? 'bg-slate-800 text-white rounded-tr-none' 
                    : `${bubbleColors[userState.finMon.stage]} text-white rounded-tl-none`
@@ -182,7 +186,7 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={`Talk to ${userState.finMon.name}...`}
-              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50"
+              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50 font-sans"
             />
             <button 
               type="submit" 
@@ -194,6 +198,7 @@ export const FinMonChatModal: React.FC<FinMonChatModalProps> = ({
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

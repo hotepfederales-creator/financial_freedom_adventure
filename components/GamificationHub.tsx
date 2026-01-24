@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserState, Achievement } from '../types';
 import { Card } from './ui/Card';
-import { Trophy, Star, Target, ShieldCheck, User, BookOpen, X, ArrowRight, CheckCircle, Lock, Wallet, Zap, Brain, PiggyBank, Swords, TrendingUp, Database, MessageSquare } from 'lucide-react';
+import { Trophy, Star, Target, ShieldCheck, User, BookOpen, X, ArrowRight, CheckCircle, Lock, Wallet, Zap, Brain, PiggyBank, Swords, TrendingUp, Database, MessageSquare, Clock } from 'lucide-react';
 import { FinMon } from './FinMon';
 
 interface GamificationHubProps {
@@ -44,8 +44,33 @@ const FIN_DEX = [
 
 export const GamificationHub: React.FC<GamificationHubProps> = ({ userState, onUpdateUser, addPoints }) => {
   const [isDexOpen, setIsDexOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState<string>('');
+  const [timeZone, setTimeZone] = useState<string>('');
+
   const nextLevel = (Math.floor(userState.points / 100) + 1) * 100;
   const progress = (userState.points % 100) / 100 * 100;
+
+  // Sync time to user's location/system
+  useEffect(() => {
+    // Initial set
+    const updateTime = () => {
+        const now = new Date();
+        setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    };
+    
+    // Get Timezone name (e.g., "America/New_York" -> "New York")
+    try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const city = tz.split('/')[1]?.replace(/_/g, ' ') || tz;
+        setTimeZone(city);
+    } catch (e) {
+        setTimeZone('Local');
+    }
+
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // --- Daily Quests Configuration ---
   const dailyQuests = [
@@ -201,7 +226,7 @@ export const GamificationHub: React.FC<GamificationHubProps> = ({ userState, onU
             {/* Trainer Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-white border-2 border-slate-400">
+                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-white border-2 border-slate-400 overflow-hidden">
                   <User size={32} />
                 </div>
                 <div>
@@ -213,7 +238,7 @@ export const GamificationHub: React.FC<GamificationHubProps> = ({ userState, onU
               <div className="grid grid-cols-2 gap-4 text-sm mb-6">
                 <div>
                   <p className="text-slate-500 uppercase text-xs">Name</p>
-                  <p className="font-bold text-slate-800">Player One</p>
+                  <p className="font-bold text-slate-800 truncate" title={userState.trainerName}>{userState.trainerName || 'Trainer'}</p>
                 </div>
                 <div>
                   <p className="text-slate-500 uppercase text-xs">Money (Pts)</p>
@@ -224,8 +249,10 @@ export const GamificationHub: React.FC<GamificationHubProps> = ({ userState, onU
                   <p className="font-bold text-slate-800">{userState.finMon.name}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 uppercase text-xs">Started</p>
-                  <p className="font-bold text-slate-800">2023</p>
+                  <p className="text-slate-500 uppercase text-xs">Local Time ({timeZone})</p>
+                  <p className="font-bold text-slate-800 font-mono flex items-center gap-1">
+                    <Clock size={12} className="text-slate-500" /> {currentTime}
+                  </p>
                 </div>
               </div>
 
@@ -246,9 +273,13 @@ export const GamificationHub: React.FC<GamificationHubProps> = ({ userState, onU
             </div>
 
             {/* Companion Visual on Card */}
-            <div className="w-40 h-40 bg-slate-900/5 rounded-full flex items-center justify-center border-4 border-white shadow-inner">
-               <div className="w-32 h-32">
-                 <FinMon stage={userState.finMon.stage} />
+            <div className="w-40 h-40 bg-slate-900/5 rounded-full flex items-center justify-center border-4 border-white shadow-inner relative overflow-hidden">
+               <div className="w-32 h-32 relative z-10">
+                 <FinMon stage={userState.finMon.stage} species={userState.finMon.species} />
+               </div>
+               {/* City/Timezone Background Hint */}
+               <div className="absolute bottom-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest opacity-50">
+                  {timeZone}
                </div>
             </div>
           </div>
