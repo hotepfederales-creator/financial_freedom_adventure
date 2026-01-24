@@ -122,6 +122,9 @@ const App: React.FC<AppProps> = ({ onTutorialAction }) => {
   const [evolutionData, setEvolutionData] = useState<{from: 1|2|3|4, to: 1|2|3|4, species?: string} | null>(null);
   const prevStageRef = useRef<1|2|3|4>(userState.finMon.stage);
 
+  // Navigation Tracking Ref
+  const prevViewRef = useRef<View | null>(null);
+
   // God Mode Raid State
   const [raidBoss, setRaidBoss] = useState<RaidBoss>({
     id: 'raid_1',
@@ -147,11 +150,23 @@ const App: React.FC<AppProps> = ({ onTutorialAction }) => {
     }
   }, [profile]);
 
-  // Analytics: Track View Changes
+  // Analytics: Track View Changes and User Flow
   useEffect(() => {
+    // 1. Capture Virtual Pageview (Good for heatmaps)
     posthog.capture('$pageview', {
       '$current_url': `${window.location.origin}/${currentView}`
     });
+
+    // 2. Capture Explicit Navigation Flow (Good for funnel analysis)
+    // Only capture if it's a change or initial load
+    if (prevViewRef.current !== currentView) {
+        posthog.capture('View Navigated', {
+            from_view: prevViewRef.current || 'entry',
+            to_view: currentView,
+            timestamp: Date.now()
+        });
+        prevViewRef.current = currentView;
+    }
   }, [currentView]);
 
   // Check for first time visit (Old Onboarding logic kept for robustness, but TutorialLevel supercedes)
